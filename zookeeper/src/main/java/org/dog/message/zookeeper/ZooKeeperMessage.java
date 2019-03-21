@@ -22,7 +22,9 @@ import org.dog.core.listener.TccTryAchievementListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -128,7 +130,20 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                                     logger.info("tcc扫描：" + tcckeyPath);
 
-                                    tccStatus = zooKeeper.getData(tcckeyPath, false, new Stat());
+                                    Stat tcckeyPathStat = new Stat();
+
+                                    tccStatus = zooKeeper.getData(tcckeyPath, false, tcckeyPathStat);
+
+                                    long currtime = new Date().getTime();
+
+                                    long mtime = tcckeyPathStat.getMtime();
+
+                                    if((currtime -mtime)< 1000 * 60){
+
+                                        logger.info(tcckeyPath+"活动事务，暂不扫描");
+
+                                        continue;
+                                    }
 
                                     monitorNode = zooKeeper.exists(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), false);
 
@@ -207,7 +222,23 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                                 for (String key : trankeys) {
 
+
                                     String trankeyPath = PathHelper.linkPath(tranNamePath, key);
+
+                                    Stat tcckeyPathStat = new Stat();
+
+                                    zooKeeper.getData(trankeyPath, false, tcckeyPathStat);
+
+                                    long currtime = new Date().getTime();
+
+                                    long mtime = tcckeyPathStat.getMtime();
+
+                                    if((currtime -mtime)< 1000 * 60){
+
+                                        logger.info(trankeyPath+"活动事务，暂不扫描");
+
+                                        continue;
+                                    }
 
                                     watchCallOffline(e, name, key, trankeyPath, callNodeOfflineListener);
 

@@ -65,13 +65,19 @@ public class TccServer implements ITccServer{
 
         try {
 
+            logger.info("TCC远程调用:"+tran);
+
             Object result = point.proceed();
+
+            logger.info("TCC返回:"+tran);
 
             message.confirmTry(tran);
 
             return  result;
 
         } catch (Throwable e) {
+
+            logger.info("TCC报错:"+tran);
 
             logger.error(e);
 

@@ -28,7 +28,7 @@ public class DogTcc implements Serializable {
 
     @Override
     public String toString() {
-        return "[DogTran:  application:"+application+"    name:"+name+"   key:"+key+"]";
+        return "[DogTran:  application:"+application+"    name:"+name+"   key:"+key+" status"+status+"]";
     }
 
     public final  static  String NameHeader = "DogName";

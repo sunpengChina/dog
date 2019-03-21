@@ -21,10 +21,21 @@ public class TransServer {
 
         client2.tran(new TranD("abc","efg"));
 
-        client3.tran(new TranD("hig","lmn"));
+//        client3.tran(new TranD("hig","lmn"));
 
         return  "OK";
 
    }
+
+
+    public  String nottccTran()throws Exception{
+
+        client2.tran(new TranD("abc","efg"));
+
+//        client3.tran(new TranD("hig","lmn"));
+
+        return  "OK";
+
+    }
 
 }

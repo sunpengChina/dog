@@ -18,7 +18,6 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
     private static Logger logger = Logger.getLogger(SimultaneousMessage.class);
 
-
     public SimultaneousMessage(String applicationName, ZookeeperConfig autoConfig) {
 
         super(applicationName, autoConfig);
@@ -34,7 +33,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
      * @throws InterruptedException
      */
     @Override
-    public void registerTcc(DogTcc tcc) throws ConnectException,NonexistException,InterruptedException{
+    public synchronized void  registerTcc(DogTcc tcc) throws ConnectException,NonexistException,InterruptedException{
 
         /**
          *  /root/application/transactions
@@ -73,10 +72,18 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         }catch (KeeperException|InterruptedException e ){
 
-            logger.error(e);
+            if( e instanceof  KeeperException){
 
+                logger.info(tcc+"被托管");
+                logger.info(e);
 
-            throwException(e);
+            }else {
+
+                logger.error(e);
+                throwException(e);
+
+            }
+
         }
 
         logger.info("创建："+ pathHelper.tccMonitorContent(tcc));
@@ -84,7 +91,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public void confirmTry(DogTcc tcc) throws NotStartTransactionException,ConnectException ,InterruptedException{
+    public synchronized void confirmTry(DogTcc tcc) throws NotStartTransactionException,ConnectException ,InterruptedException{
 
         checkIfTransactionStarter(tcc);
 
@@ -107,7 +114,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public void cancelTry(DogTcc tcc) throws NotStartTransactionException,ConnectException ,InterruptedException{
+    public synchronized void cancelTry(DogTcc tcc) throws NotStartTransactionException,ConnectException ,InterruptedException{
 
         checkIfTransactionStarter(tcc);
 
@@ -133,7 +140,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public void registerCall(DogTcc transaction, DogCall call, byte[] data) throws ConnectException,InterruptedException ,NonexistException {
+    public synchronized void registerCall(DogTcc transaction, DogCall call, byte[] data) throws ConnectException,InterruptedException ,NonexistException {
 
         checkContent(pathHelper.subApplicationPath(transaction,applicationName),true,null);
 
@@ -151,16 +158,25 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         }catch (KeeperException|InterruptedException e ){
 
-            logger.error(e);
+            if( e instanceof  KeeperException){
 
-            throwException(e);
+                logger.info(transaction+"被托管");
+                logger.info(e);
+
+            }else {
+
+                logger.error(e);
+                throwException(e);
+
+            }
+
         }
 
 
     }
 
     @Override
-    public void confirmCall(DogTcc transaction, DogCall call) throws ConnectException, InterruptedException {
+    public synchronized void confirmCall(DogTcc transaction, DogCall call) throws ConnectException, InterruptedException {
 
         try {
 
@@ -183,7 +199,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public void clearTcc(DogTcc transaction) throws ConnectException, InterruptedException{
+    public synchronized void clearTcc(DogTcc transaction) throws ConnectException, InterruptedException{
 
         try {
 

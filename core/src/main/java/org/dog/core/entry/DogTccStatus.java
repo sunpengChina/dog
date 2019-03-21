@@ -21,7 +21,6 @@ public enum DogTccStatus implements Serializable {
         return value;
     }
 
-
     public  static DogTccStatus getInstance(byte[] value){
 
         String str = new String(value);
@@ -43,4 +42,9 @@ public enum DogTccStatus implements Serializable {
         }
     }
 
+
+    @Override
+    public String toString() {
+        return new String(value);
+    }
 }

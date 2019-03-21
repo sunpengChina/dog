@@ -20,4 +20,8 @@ public enum DogCallStatus implements Serializable {
         return value;
     }
 
+    @Override
+    public String toString() {
+        return new String(value);
+    }
 }

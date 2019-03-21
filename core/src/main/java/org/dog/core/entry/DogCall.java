@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class DogCall implements Serializable {
     @Override
     public String toString() {
-        return "[LocalServer:    name:"+name+"   key:"+key+"]";
+        return "[LocalServer:    name:"+name+"   key:"+key+"   status:"+serverStatus+"]";
     }
 
     private String key;
