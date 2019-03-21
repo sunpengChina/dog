@@ -1,5 +1,6 @@
 package org.dog.message.zookeeper;
 
+import org.apache.zookeeper.Op;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogTccStatus;
 import org.dog.core.entry.DogCall;
@@ -12,6 +13,12 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.dog.message.zookeeper.util.ZkHelp;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.dog.message.zookeeper.util.ZkHelp.throwException;
 
 
 public abstract class SimultaneousMessage extends ConnectableMessage implements IBroker {
@@ -35,58 +42,29 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     @Override
     public synchronized void  registerTcc(DogTcc tcc) throws ConnectException,NonexistException,InterruptedException{
 
-        /**
-         *  /root/application/transactions
-         */
-        checkContent(pathHelper.tccNamePath(tcc),true,null);
 
-        /**
-         *  /root/application/transactionname/transactionkey
-         */
-        try{
+        ZkHelp.checkContent(getConnection(),pathHelper.tccNamePath(tcc),true,null);
 
-            zooKeeper.create(pathHelper.tccKeyPath(tcc), DogTccStatus.TRY.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        List<Op> ops = new ArrayList<Op>();
 
-        }catch (KeeperException|InterruptedException e){
+        ops.add(Op.create(pathHelper.tccKeyPath(tcc), DogTccStatus.TRY.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
-            logger.error(e);
+        ops.add(Op.create(pathHelper.tccNodesPath(tcc), "NONE".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
-            throwException(e);
-        }
-
-        logger.info("创建："+ pathHelper.tccKeyPath(tcc));
+        ops.add(Op.create(pathHelper.tccMonitorContent(tcc), "NONE".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
 
 
-        /**
-         *  /root/application/transactionname/transactionkey/nodes
-         */
-        checkContent(pathHelper.tccNodesPath(tcc),true,null);
-
-
-        /**
-         *  /root/application/transactionname/transactionkey/monitor
-         */
         try {
 
-            zooKeeper.create(pathHelper.tccMonitorContent(tcc),null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            getConnection().multi(ops);
 
-        }catch (KeeperException|InterruptedException e ){
+            logger.info(tcc +"Start OK");
 
-            if( e instanceof  KeeperException){
+        }catch (Exception e){
 
-                logger.info(tcc+"被托管");
-                logger.info(e);
-
-            }else {
-
-                logger.error(e);
-                throwException(e);
-
-            }
-
+            logger.error(tcc +"Start error" + e);
         }
 
-        logger.info("创建："+ pathHelper.tccMonitorContent(tcc));
 
     }
 
@@ -95,12 +73,11 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         checkIfTransactionStarter(tcc);
 
-        /**
-         * /root/application/transactionname/transactionkey  - confirm
-         */
         try{
 
-            zooKeeper.setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CONFIRM.getBytes(),AnyVersion);
+            getConnection().setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CONFIRM.getBytes(),AnyVersion);
+
+            logger.info(tcc + ": confirm");
 
         }catch (KeeperException|InterruptedException e){
 
@@ -108,8 +85,6 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
             throwException(e);
         }
-
-        logger.info("设置："+ pathHelper.tccKeyPath(tcc) +"  " + DogTccStatus.CONFIRM);
 
     }
 
@@ -118,13 +93,11 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         checkIfTransactionStarter(tcc);
 
-        /**
-         * /root/application/transactionname/transactionkey  - cancel
-         */
-
         try {
 
-            zooKeeper.setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CANCEL.getBytes(),AnyVersion);
+            getConnection().setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CANCEL.getBytes(),AnyVersion);
+
+            logger.info(tcc + ": cancel");
 
         }catch (KeeperException|InterruptedException e){
 
@@ -134,43 +107,31 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
         }
 
 
-        logger.info("设置："+ pathHelper.tccKeyPath(tcc) +"  " + DogTccStatus.CANCEL);
-
-
     }
 
     @Override
     public synchronized void registerCall(DogTcc transaction, DogCall call, byte[] data) throws ConnectException,InterruptedException ,NonexistException {
 
-        checkContent(pathHelper.subApplicationPath(transaction,applicationName),true,null);
 
-        /**
-         * /root/application/transactionname/transactionkey/nodes/subapplication/serverName  create
-         */
-        checkContent(pathHelper.callPath(transaction,applicationName,call),true,data);
+        ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(transaction,applicationName),true,null);
 
-        /**
-         *   /root/application/transactionname/transactionkey/nodes/subapplication/serverName/minitor create
-         */
+        List<Op> ops = new ArrayList<Op>();
+
+        ops.add(Op.create(pathHelper.callPath(transaction,applicationName,call),"NONE".getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+        ops.add(Op.create(pathHelper.callMonitorPath(transaction,applicationName,call),null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
+
         try {
 
-            zooKeeper.create(pathHelper.callMonitorPath(transaction,applicationName,call),null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            getConnection().multi(ops);
 
-        }catch (KeeperException|InterruptedException e ){
+            logger.info(transaction +" " +"Start Call:" + call +" OK");
 
-            if( e instanceof  KeeperException){
+        }catch (Exception e){
 
-                logger.info(transaction+"被托管");
-                logger.info(e);
-
-            }else {
-
-                logger.error(e);
-                throwException(e);
-
-            }
-
+            logger.info(transaction +" " +"Start Call:" + call +" error");
         }
+
 
 
     }
@@ -180,12 +141,15 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         try {
 
-            zooKeeper.delete(pathHelper.callMonitorPath(transaction,applicationName,call),AnyVersion);
+            List<Op> ops = new ArrayList<Op>();
 
-            zooKeeper.delete(pathHelper.callPath(transaction,applicationName,call),AnyVersion);
+            ops.add(Op.delete(pathHelper.callMonitorPath(transaction,applicationName,call),AnyVersion));
 
+            ops.add(Op.delete(pathHelper.callPath(transaction,applicationName,call),AnyVersion));
 
-            logger.info("删除："+ pathHelper.callPath(transaction,applicationName,call) +"  " + DogCallStatus.CONFIRM);
+            getConnection().multi(ops);
+
+            logger.info( transaction + "  " +call +" confirm");
 
 
         }catch (Exception e){
@@ -203,12 +167,15 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         try {
 
-            /**
-             * 级联删除事务关联目录
-             */
-            ZKUtil.rmr(pathHelper.tccKeyPath(transaction),zooKeeper);
+            List<Op> ops = new ArrayList<Op>();
 
-            logger.info("clearTcc:"+ transaction);
+            ops.add(Op.delete(pathHelper.tccMonitorContent(transaction),AnyVersion));
+
+            ops.add(Op.delete(pathHelper.tccKeyPath(transaction),AnyVersion));
+
+            getConnection().multi(ops);
+
+            logger.info(transaction + " clear");
 
         }catch (KeeperException|InterruptedException  e){
 

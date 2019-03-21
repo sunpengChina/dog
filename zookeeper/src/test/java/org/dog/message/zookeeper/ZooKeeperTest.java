@@ -5,6 +5,8 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -140,6 +142,64 @@ public class ZooKeeperTest {
             zooKeeper.create(ranPath + "/subPath", "None".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
 
+
+    }
+
+
+    @Test
+    public void zooKeeperTestTran() throws Exception {
+
+        ZooKeeper zooKeeper = new ZooKeeper("127.0.0.1:2181", 1000000, new Watcher() {
+            @Override
+            public void process(WatchedEvent watchedEvent) {
+                System.out.println(watchedEvent);
+            }
+        });
+
+
+        Random r = new Random();
+
+        List<Op> ops = new ArrayList<Op>();
+
+        for(int i=0;i<10;i++) {
+
+            Integer randomPath = r.nextInt();
+
+            String ranPath = "/dog/junit/" + randomPath.toString();
+
+            ops.add(Op.create(ranPath, "None".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+            ops.add(Op.create(ranPath + "/subPath", "None".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        }
+
+        zooKeeper.multi(ops);
+
+    }
+
+    @Test
+    public void zooKeeperTestList() throws Exception {
+
+//        Random r = new Random();
+//
+//        for(int i= 0;i<100;i++){
+//
+//            System.out.println( r.nextInt(5));
+//
+//        }
+
+//        List<Integer> buff = new ArrayList<>();
+//
+//        buff.add(10);
+//
+//        buff.add(11);
+//
+//        buff.add(12);
+//
+//        Integer first = buff.get(0);
+//
+//        first = 13;
+//
+//        System.out.println(buff.get(0));
 
     }
 

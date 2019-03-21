@@ -1,4 +1,4 @@
-package org.dog.message.zookeeper;
+package org.dog.message.zookeeper.util;
 
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
@@ -68,7 +68,6 @@ public class PathHelper {
 
     }
 
-
     public String tccNamePath(DogTcc transaction) {
 
         String applicationContent = linkPath(zookeepWorkPath, transaction.getApplication());
@@ -101,7 +100,6 @@ public class PathHelper {
 
     }
 
-
     public String subApplicationPath(DogTcc transaction, String applicationName){
 
           String nodesContent = tccNodesPath(transaction);
@@ -109,8 +107,6 @@ public class PathHelper {
         return linkPath(nodesContent, applicationName);
 
     }
-
-
 
     public String callPath(DogTcc transaction, String applicationName, DogCall server){
 

@@ -77,7 +77,6 @@ public class Server1ApplicationController {
     @RequestMapping("/threadintran")
     public String threadintran() throws Exception{
 
-
         ExecutorService service = Executors.newFixedThreadPool(10);
 
         long startTime = System.currentTimeMillis();

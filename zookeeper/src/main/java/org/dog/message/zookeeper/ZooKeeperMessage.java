@@ -19,16 +19,19 @@ import org.dog.core.listener.CallNodeOfflineListener;
 import org.dog.core.listener.TccAchievementListener;
 import org.dog.core.listener.TccNodeOfflineListener;
 import org.dog.core.listener.TccTryAchievementListener;
+import org.dog.message.zookeeper.util.PathHelper;
+import org.dog.message.zookeeper.watcher.TccTryWatcher;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static org.dog.message.zookeeper.util.ZkHelp.throwException;
 
 @Component
 public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
@@ -49,31 +52,8 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
         try {
 
-            byte[] status = zooKeeper.getData(pathHelper.tccKeyPath(transaction), new Watcher() {
-
-                @Override
-                public void process(WatchedEvent watchedEvent) {
-
-                    if (watchedEvent.getType().equals(Event.EventType.NodeDataChanged)) {
-
-                        try {
-
-                            byte[] data = zooKeeper.getData(watchedEvent.getPath(), false, new Stat());
-
-                            transaction.setStatus(DogTccStatus.getInstance(data));
-
-                            listener.onTccEvent(new TccTryAchievementEvent(transaction));
-
-                        } catch (InterruptedException | KeeperException e) {
-
-                            logger.error(e);
-                        }
-
-                    }
-
-                }
-            }, new Stat());
-
+            byte[] status = getConnection().getData(pathHelper.tccKeyPath(transaction),new TccTryWatcher(
+                    transaction,listener,getConnection()), new Stat());
 
             /**
              * 监控之前数据已经发生了变化  [如节点丢失的情况]
@@ -108,7 +88,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                     try {
 
-                        List<String> tccNames = zooKeeper.getChildren(pathHelper.applicationPath(), false);
+                        List<String> tccNames = getConnection().getChildren(pathHelper.applicationPath(), false);
 
                         for (String tccname : tccNames) {
 
@@ -116,7 +96,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                             logger.info("tcc扫描：" + tccnamePath);
 
-                            List<String> tcckeys = zooKeeper.getChildren(tccnamePath, false);
+                            List<String> tcckeys = getConnection().getChildren(tccnamePath, false);
 
                             for (String tcckey : tcckeys) {
 
@@ -132,7 +112,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                                     Stat tcckeyPathStat = new Stat();
 
-                                    tccStatus = zooKeeper.getData(tcckeyPath, false, tcckeyPathStat);
+                                    tccStatus = getConnection().getData(tcckeyPath, false, tcckeyPathStat);
 
                                     long currtime = new Date().getTime();
 
@@ -145,7 +125,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
                                         continue;
                                     }
 
-                                    monitorNode = zooKeeper.exists(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), false);
+                                    monitorNode = getConnection().exists(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), false);
 
                                 } catch (Exception e) {
 
@@ -158,7 +138,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                                     try {
 
-                                        zooKeeper.create(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                                        getConnection().create(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
                                         logger.info("tcc托管：" + tcckeyPath);
 
@@ -193,13 +173,13 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                     try {
 
-                        List<String> applications = zooKeeper.getChildren(pathHelper.zookeeperWorkPath(), false);
+                        List<String> applications = getConnection().getChildren(pathHelper.zookeeperWorkPath(), false);
 
                         for (String e : applications) {
 
                             String applicationPath = PathHelper.linkPath(pathHelper.zookeeperWorkPath(), e);
 
-                            List<String> tranNames = zooKeeper.getChildren(applicationPath, false);
+                            List<String> tranNames = getConnection().getChildren(applicationPath, false);
 
                             for (String name : tranNames) {
 
@@ -211,7 +191,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                                 try {
 
-                                    trankeys = zooKeeper.getChildren(tranNamePath, false);
+                                    trankeys = getConnection().getChildren(tranNamePath, false);
 
                                 } catch (Exception z) {
 
@@ -222,12 +202,11 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                                 for (String key : trankeys) {
 
-
                                     String trankeyPath = PathHelper.linkPath(tranNamePath, key);
 
                                     Stat tcckeyPathStat = new Stat();
 
-                                    zooKeeper.getData(trankeyPath, false, tcckeyPathStat);
+                                    getConnection().getData(trankeyPath, false, tcckeyPathStat);
 
                                     long currtime = new Date().getTime();
 
@@ -255,7 +234,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                     }
 
-
                     logger.info("恢复线程结束");
 
                 }
@@ -275,7 +253,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
             logger.info("call扫描：" + nodesPath);
 
-            subApplicationNames = zooKeeper.getChildren(nodesPath, false);
+            subApplicationNames = getConnection().getChildren(nodesPath, false);
 
         } catch (Exception e) {
 
@@ -296,7 +274,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                     logger.info("call扫描：" + subApplicationPath);
 
-                    callNames = zooKeeper.getChildren(subApplicationPath, false);
+                    callNames = getConnection().getChildren(subApplicationPath, false);
 
                 } catch (Exception e) {
 
@@ -317,7 +295,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                         logger.info("call扫描：" + callPath);
 
-                        stat = zooKeeper.exists(PathHelper.linkPath(callPath, PathHelper.MONITOR), false);
+                        stat = getConnection().exists(PathHelper.linkPath(callPath, PathHelper.MONITOR), false);
 
                     } catch (Exception e) {
 
@@ -330,7 +308,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                         try {
 
-                            zooKeeper.create(PathHelper.linkPath(callPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                            getConnection().create(PathHelper.linkPath(callPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
                         } catch (Exception e) {
 
@@ -342,7 +320,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                         DogCall call = new DogCall(callName);
 
-                        byte[] data = zooKeeper.getData(callPath, false, new Stat());
+                        byte[] data = getConnection().getData(callPath, false, new Stat());
 
                         dogCalls.add(new Pair<>(call, data));
 
@@ -369,7 +347,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
     }
 
-
     @Override
     public void watchCallsConfirm(DogTcc transaction, TccAchievementListener listener) throws ConnectException, InterruptedException, NotStartTransactionException {
 
@@ -388,7 +365,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
         try {
 
-            subApplications = zooKeeper.getChildren(path, new Watcher() {
+            subApplications = getConnection().getChildren(path, new Watcher() {
 
                 @Override
                 public void process(WatchedEvent watchedEvent) {
@@ -398,8 +375,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
                     try {
 
                         if (watchedEvent.getType().equals(Event.EventType.NodeChildrenChanged)) {
-
-                            logger.info(path + "子目录被删除");
 
                             watchCallsConfirm(transaction, listener, true);
 
@@ -420,11 +395,9 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
             if (subApplications.isEmpty()) {
 
-                logger.info(path + "子目录为空");
-
                 try {
 
-                    zooKeeper.delete(path, AnyVersion);
+                    getConnection().delete(path, AnyVersion);
 
                 } catch (Exception e) {
 
@@ -461,25 +434,17 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
     private void watchSubApplicationConfirm(String subApplication) throws ConnectException, InterruptedException {
 
-
-        logger.info("查询目录:" + subApplication);
-
-
         try {
 
-            List<String> calls = zooKeeper.getChildren(subApplication, new Watcher() {
+            List<String> calls = getConnection().getChildren(subApplication, new Watcher() {
 
                 @Override
                 public void process(WatchedEvent watchedEvent) {
-
-                    logger.info(subApplication + "发生事件" + watchedEvent);
 
                     /**
                      * 先发生NodeChildrenChanged 再发生 NodeDeleted
                      */
                     if (watchedEvent.getType().equals(Event.EventType.NodeChildrenChanged)) {
-
-                        logger.info(subApplication + ":子目录被删除");
 
                         try {
 
@@ -500,16 +465,9 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
             });
 
 
-            logger.info("目录:" + subApplication + ":子目录数：" + calls.size());
-
-
             if (calls.isEmpty()) {
 
-                logger.info("目录：" + subApplication + "为空");
-
-                zooKeeper.delete(subApplication, AnyVersion);
-
-                logger.info("删除目录：" + subApplication);
+                getConnection().delete(subApplication, AnyVersion);
 
             }
 
