@@ -179,28 +179,42 @@ public class ZooKeeperTest {
     @Test
     public void zooKeeperTestList() throws Exception {
 
-//        Random r = new Random();
-//
-//        for(int i= 0;i<100;i++){
-//
-//            System.out.println( r.nextInt(5));
-//
-//        }
+        ZooKeeper zooKeeper = new ZooKeeper("127.0.0.1:2181", 1000000, new Watcher() {
+            @Override
+            public void process(WatchedEvent watchedEvent) {
+                System.out.println(watchedEvent);
+            }
+        });
 
-//        List<Integer> buff = new ArrayList<>();
-//
-//        buff.add(10);
-//
-//        buff.add(11);
-//
-//        buff.add(12);
-//
-//        Integer first = buff.get(0);
-//
-//        first = 13;
-//
-//        System.out.println(buff.get(0));
+        Random r = new Random();
 
+        List<Op> ops = new ArrayList<Op>();
+
+
+        String ranPath = "/dog/junit/" + r.nextInt(1000);
+
+        ops.add(Op.create(ranPath, "None".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+        zooKeeper.multi(ops);
+
+        Stat stat = new Stat();
+
+        zooKeeper.getData(ranPath,false,stat);
+
+        System.out.println(stat.getAversion());
+
+        zooKeeper.delete(ranPath,0);
+
+        zooKeeper.create(ranPath, "None".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        List<Op> newPos = new ArrayList<Op>();
+
+        newPos.add( Op.check(ranPath,0));
+
+        newPos.add(Op.create("/dog/hh", "None".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+
+        zooKeeper.multi(newPos);
     }
 
 

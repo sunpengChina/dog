@@ -117,7 +117,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         List<Op> ops = new ArrayList<Op>();
 
-        ops.add(Op.create(pathHelper.callPath(transaction,applicationName,call),"NONE".getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        ops.add(Op.create(pathHelper.callPath(transaction,applicationName,call),data,ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
         ops.add(Op.create(pathHelper.callMonitorPath(transaction,applicationName,call),null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
 

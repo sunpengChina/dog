@@ -8,6 +8,7 @@ import org.dog.core.event.CallNodeOfflineEvent;
 import org.dog.core.event.TccAchievementEvent;
 import org.dog.core.event.TccNodeOfflineEvent;
 import org.dog.core.event.TccTryAchievementEvent;
+import org.dog.core.jms.AsynchronousBroker;
 import org.dog.core.jms.exception.ConnectException;
 import org.dog.core.jms.IBroker;
 import org.dog.core.jms.exception.NotStartTransactionException;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import static org.dog.message.zookeeper.util.ZkHelp.throwException;
 
 @Component
-public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
+public class ZooKeeperMessage extends SimultaneousMessage implements AsynchronousBroker {
 
     protected ScheduledExecutorService scheduledExecutorService = null;
 
@@ -52,8 +53,8 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
         try {
 
-            byte[] status = getConnection().getData(pathHelper.tccKeyPath(transaction),new TccTryWatcher(
-                    transaction,listener,getConnection()), new Stat());
+            byte[] status = getConnection().getData(pathHelper.tccKeyPath(transaction), new TccTryWatcher(
+                    transaction, listener, getConnection()), new Stat());
 
             /**
              * 监控之前数据已经发生了变化  [如节点丢失的情况]
@@ -88,76 +89,40 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                     try {
 
-                        List<String> tccNames = getConnection().getChildren(pathHelper.applicationPath(), false);
 
-                        for (String tccname : tccNames) {
+                        watchTccOffline(tccNodeOfflineListener);
 
-                            String tccnamePath = PathHelper.linkPath(pathHelper.applicationPath(), tccname);
 
-                            logger.info("tcc扫描：" + tccnamePath);
+                        List<String> applications = getConnection().getChildren(pathHelper.zookeeperWorkPath(), false);
 
-                            List<String> tcckeys = getConnection().getChildren(tccnamePath, false);
+                        for (String tccStartapplication : applications) {
 
-                            for (String tcckey : tcckeys) {
+                            /**
+                             * /root/application1
+                             */
+                            String applicationPath = PathHelper.linkPath(pathHelper.zookeeperWorkPath(), tccStartapplication);
 
-                                String tcckeyPath = PathHelper.linkPath(tccnamePath, tcckey);
+                            List<String> tccNames = getConnection().getChildren(applicationPath, false);
 
-                                byte[] tccStatus = null;
+                            for (String tccpath : tccNames) {
 
-                                Stat monitorNode = null;
+                                /**
+                                 * /root/application1/tranname
+                                 */
+                                String tccNamePath = PathHelper.linkPath(applicationPath, tccpath);
 
-                                try {
+                                List<String> trankeys = getConnection().getChildren(tccNamePath, false);
 
-                                    logger.info("tcc扫描：" + tcckeyPath);
+                                for (String tcckey : trankeys) {
 
-                                    Stat tcckeyPathStat = new Stat();
+                                    /**
+                                     * /root/application1/tranname/trankey
+                                     */
+                                    String tcckeyPath = PathHelper.linkPath(tccNamePath, tcckey);
 
-                                    tccStatus = getConnection().getData(tcckeyPath, false, tcckeyPathStat);
+                                    watchCallOffline(tccStartapplication, tccpath, tcckey, tcckeyPath, callNodeOfflineListener);
 
-                                    long currtime = new Date().getTime();
-
-                                    long mtime = tcckeyPathStat.getMtime();
-
-                                    if((currtime -mtime)< 1000 * 60){
-
-                                        logger.info(tcckeyPath+"活动事务，暂不扫描");
-
-                                        continue;
-                                    }
-
-                                    monitorNode = getConnection().exists(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), false);
-
-                                } catch (Exception e) {
-
-                                    logger.error(tcckeyPath + "事务已经被清理");
-
-                                    continue;
                                 }
-
-                                if (monitorNode == null) {
-
-                                    try {
-
-                                        getConnection().create(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-
-                                        logger.info("tcc托管：" + tcckeyPath);
-
-                                    } catch (Exception e) {
-
-                                        logger.error(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR) + "已经被其他线程托管，或者事务已经被清理");
-
-                                        continue;
-                                    }
-
-                                    DogTcc dogTcc = new DogTcc(applicationName, tccname, tcckey);
-
-                                    dogTcc.setStatus(DogTccStatus.getInstance(tccStatus));
-
-                                    logger.info("发送tcc 节点掉线事件：" + dogTcc);
-
-                                    tccNodeOfflineListener.onTccEvent(new TccNodeOfflineEvent(dogTcc));
-                                }
-
 
                             }
 
@@ -171,69 +136,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                     }
 
-                    try {
-
-                        List<String> applications = getConnection().getChildren(pathHelper.zookeeperWorkPath(), false);
-
-                        for (String e : applications) {
-
-                            String applicationPath = PathHelper.linkPath(pathHelper.zookeeperWorkPath(), e);
-
-                            List<String> tranNames = getConnection().getChildren(applicationPath, false);
-
-                            for (String name : tranNames) {
-
-                                String tranNamePath = PathHelper.linkPath(applicationPath, name);
-
-                                logger.info("call扫描：" + tranNamePath);
-
-                                List<String> trankeys = null;
-
-                                try {
-
-                                    trankeys = getConnection().getChildren(tranNamePath, false);
-
-                                } catch (Exception z) {
-
-                                    logger.error(z);
-
-                                    return;
-                                }
-
-                                for (String key : trankeys) {
-
-                                    String trankeyPath = PathHelper.linkPath(tranNamePath, key);
-
-                                    Stat tcckeyPathStat = new Stat();
-
-                                    getConnection().getData(trankeyPath, false, tcckeyPathStat);
-
-                                    long currtime = new Date().getTime();
-
-                                    long mtime = tcckeyPathStat.getMtime();
-
-                                    if((currtime -mtime)< 1000 * 60){
-
-                                        logger.info(trankeyPath+"活动事务，暂不扫描");
-
-                                        continue;
-                                    }
-
-                                    watchCallOffline(e, name, key, trankeyPath, callNodeOfflineListener);
-
-                                }
-
-                            }
-
-                        }
-
-
-                    } catch (Exception e) {
-
-                        logger.info(e);
-
-                    }
-
                     logger.info("恢复线程结束");
 
                 }
@@ -243,7 +145,59 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
     }
 
+
+    private void watchTccOffline(TccNodeOfflineListener tccNodeOfflineListener) throws ConnectException, InterruptedException {
+
+        try {
+
+            List<String> tccNames = getConnection().getChildren(pathHelper.applicationPath(), false);
+
+            for (String tccname : tccNames) {
+
+                String tccnamePath = PathHelper.linkPath(pathHelper.applicationPath(), tccname);
+
+                logger.info("tcc扫描：" + tccnamePath);
+
+                List<String> tcckeys = getConnection().getChildren(tccnamePath, false);
+
+                for (String tcckey : tcckeys) {
+
+                    String tcckeyPath = PathHelper.linkPath(tccnamePath, tcckey);
+
+                    try {
+
+                        getConnection().create(PathHelper.linkPath(tcckeyPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+
+                        byte[] tccStatus = getConnection().getData(tcckeyPath, false, new Stat());
+
+                        DogTcc dogTcc = new DogTcc(applicationName, tccname, tcckey);
+
+                        dogTcc.setStatus(DogTccStatus.getInstance(tccStatus));
+
+                        logger.info("发送tcc 节点掉线事件：" + dogTcc);
+
+                        tccNodeOfflineListener.onTccEvent(new TccNodeOfflineEvent(dogTcc));
+
+                    } catch (Exception e) {
+
+                        continue;
+
+                    }
+
+                }
+
+            }
+
+        } catch (Exception e) {
+
+            throwException(e);
+        }
+
+    }
+
+
     private void watchCallOffline(String application, String tccname, String tcckey, String tcckeyPath, CallNodeOfflineListener callNodeOfflineListener) throws Exception {
+
 
         String nodesPath = PathHelper.linkPath(tcckeyPath, PathHelper.NODES);
 
@@ -251,13 +205,9 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
         try {
 
-            logger.info("call扫描：" + nodesPath);
-
             subApplicationNames = getConnection().getChildren(nodesPath, false);
 
         } catch (Exception e) {
-
-            logger.info(nodesPath + "已经被清理");
 
             return;
         }
@@ -272,15 +222,11 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                 try {
 
-                    logger.info("call扫描：" + subApplicationPath);
-
                     callNames = getConnection().getChildren(subApplicationPath, false);
 
                 } catch (Exception e) {
 
-                    logger.info(subApplicationPath + "已经被清理");
-
-                    return;
+                    continue;
                 }
 
                 List<Pair<DogCall, byte[]>> dogCalls = new ArrayList<>();
@@ -289,43 +235,20 @@ public class ZooKeeperMessage extends SimultaneousMessage implements IBroker {
 
                     String callPath = PathHelper.linkPath(subApplicationPath, callName);
 
-                    Stat stat = null;
-
                     try {
 
-                        logger.info("call扫描：" + callPath);
-
-                        stat = getConnection().exists(PathHelper.linkPath(callPath, PathHelper.MONITOR), false);
+                        getConnection().create(PathHelper.linkPath(callPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
                     } catch (Exception e) {
-
-                        logger.info(callPath + "已经被清理");
 
                         continue;
                     }
 
-                    if (stat == null) {
+                    DogCall call = new DogCall(callName);
 
-                        try {
+                    byte[] data = getConnection().getData(callPath, false, new Stat());
 
-                            getConnection().create(PathHelper.linkPath(callPath, PathHelper.MONITOR), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-
-                        } catch (Exception e) {
-
-                            logger.error(PathHelper.linkPath(callPath, PathHelper.MONITOR) + "已经被其他线程托管,或者事务已经被清理");
-
-                            continue;
-                        }
-
-
-                        DogCall call = new DogCall(callName);
-
-                        byte[] data = getConnection().getData(callPath, false, new Stat());
-
-                        dogCalls.add(new Pair<>(call, data));
-
-                    }
-
+                    dogCalls.add(new Pair<>(call, data));
 
                 }
 
