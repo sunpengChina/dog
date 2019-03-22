@@ -47,6 +47,9 @@ Quickstart：
      
  
  其他问题：
+ 
+     wiki: https://github.com/sunpengChina/dog/wiki
+     
      请联系： sunpengchina85@gmail.com       
 
 
