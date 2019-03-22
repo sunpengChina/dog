@@ -16,23 +16,32 @@ public class TransServer {
     @Autowired
     Server3Client client3;
 
-    @DogTccAnnotation(name = "tccfromserver1")
-    public  String tccTran()throws Exception{
+
+    @DogTccAnnotation(name = "chainTcc")
+    public  String chainTcc()throws Exception{
 
         client2.tran(new TranD("abc","efg"));
 
-//        client3.tran(new TranD("hig","lmn"));
+        client3.tran(new TranD("hig","lmn"));
+
+        return  "OK";
+
+    }
+
+
+    @DogTccAnnotation(name = "singleTcc")
+    public  String singleTcc()throws Exception{
+
+        client2.tran(new TranD("abc","efg"));
 
         return  "OK";
 
    }
 
 
-    public  String nottccTran()throws Exception{
+    public  String noTcc()throws Exception{
 
         client2.tran(new TranD("abc","efg"));
-
-//        client3.tran(new TranD("hig","lmn"));
 
         return  "OK";
 

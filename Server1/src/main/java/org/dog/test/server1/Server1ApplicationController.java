@@ -1,5 +1,6 @@
 package org.dog.test.server1;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -27,20 +28,20 @@ public class Server1ApplicationController {
     }
 
 
-    @RequestMapping("/tran")
+    @RequestMapping("/chainTcc")
     public String tran() throws Exception {
-        return  server.tccTran();
+        return  server.chainTcc();
     }
 
-      @RequestMapping("/timenotran")
-    public String timenotranTest() throws Exception{
+      @RequestMapping("/noTcc1000")
+    public String noTcc1000() throws Exception{
 
 
         long startTime = System.currentTimeMillis();
 
         for(int i=0;i<1000;i++){
 
-            server.nottccTran();
+            server.noTcc();
         }
 
         long endTime = System.currentTimeMillis();
@@ -52,15 +53,15 @@ public class Server1ApplicationController {
         return  ret;
     }
 
-    @RequestMapping("/timeintran")
-    public String timeintranTest() throws Exception{
+    @RequestMapping("/singleTcc100")
+    public String singleTcc100() throws Exception{
 
 
         long startTime = System.currentTimeMillis();
 
         for(int i=0;i<100;i++){
 
-            server.tccTran();
+            server.singleTcc();
 
             /*需要将线程中的事务信息清除，否则会自动把这些事务合并为一个事务*/
             ThreadManager.clearTransaction();
@@ -74,12 +75,16 @@ public class Server1ApplicationController {
         return  ret;
     }
 
-    @RequestMapping("/threadintran")
-    public String threadintran() throws Exception{
+
+    @RequestMapping("/chainTcc1000thread")
+    public String chainTcc1000thread() throws Exception{
 
         ExecutorService service = Executors.newFixedThreadPool(10);
 
         long startTime = System.currentTimeMillis();
+
+
+        final CountDownLatch examBegin = new CountDownLatch(100);
 
         for(int i=0;i<100;i++){
 
@@ -88,12 +93,14 @@ public class Server1ApplicationController {
                                 public void run() {
                                     try {
                                         ThreadManager.clearTransaction();
-                                        server.tccTran();
+                                        server.chainTcc();
                                         //这个线程可能会被别人使用
                                         ThreadManager.clearTransaction();
                                     }catch (Exception e){
 
                                     }
+
+                                    examBegin.countDown();
                                 }
                             }
 
@@ -101,10 +108,53 @@ public class Server1ApplicationController {
         }
 
 
+        examBegin.await();
         long endTime = System.currentTimeMillis();
 
         //在事务里，100次调用需要的时间
-        String ret = "100个线程在大小为10的线程池中执行事务，调用需要的时间：" + (endTime - startTime) + "ms";
+        String ret = "100个线程在大小为10的线程池中执行多调用TCC事务，调用需要的时间：" + (endTime - startTime) + "ms";
+
+        return  ret;
+    }
+
+
+    @RequestMapping("/singleTcc1000thread")
+    public String singleTcc1000thread() throws Exception{
+
+        ExecutorService service = Executors.newFixedThreadPool(10);
+
+        long startTime = System.currentTimeMillis();
+
+
+        final CountDownLatch examBegin = new CountDownLatch(100);
+
+        for(int i=0;i<100;i++){
+
+            service.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        ThreadManager.clearTransaction();
+                                        server.singleTcc();
+                                        //这个线程可能会被别人使用
+                                        ThreadManager.clearTransaction();
+                                    }catch (Exception e){
+
+                                    }
+
+                                    examBegin.countDown();
+                                }
+                            }
+
+            );
+        }
+
+
+        examBegin.await();
+        long endTime = System.currentTimeMillis();
+
+        //在事务里，100次调用需要的时间
+        String ret = "100个线程在大小为10的线程池中执行单调用TCC事务，调用需要的时间：" + (endTime - startTime) + "ms";
 
         return  ret;
     }

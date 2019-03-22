@@ -47,7 +47,7 @@ public class ConnectableMessage implements Connectable, Closeable {
 
         this.pathHelper =  new PathHelper(zoolkeepconfig.getPath(),applicationName);
 
-        this.connectionPool = new ConnectionPool(4,zoolkeepconfig.getConnectString(),zoolkeepconfig.getSessionTimeout());
+        this.connectionPool = new ConnectionPool(zoolkeepconfig.getPoolsize(),zoolkeepconfig.getConnectString(),zoolkeepconfig.getSessionTimeout());
     }
 
 

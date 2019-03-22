@@ -10,6 +10,20 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "dog.zookeeper")
 public class ZookeeperConfig {
 
+
+
+
+
+    private int poolsize;
+
+    public int getPoolsize() {
+        return poolsize;
+    }
+
+    public void setPoolsize(int poolsize) {
+        this.poolsize = poolsize;
+    }
+
     private String path;
 
     public String getPath() {
