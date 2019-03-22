@@ -2,7 +2,8 @@ package org.dog.core.event;
 
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
-import javafx.util.Pair;
+import org.dog.core.util.Pair;
+
 
 import java.util.List;
 

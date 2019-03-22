@@ -11,6 +11,7 @@
     <modules>
         <module>Server1</module>
         <module>Server2</module>
+        <module>Server3</module>
         <module>spring</module>
         <module>zookeeper</module>
         <module>core</module>

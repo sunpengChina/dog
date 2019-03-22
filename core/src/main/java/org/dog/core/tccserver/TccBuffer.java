@@ -3,7 +3,8 @@ package org.dog.core.tccserver;
 import org.dog.core.entry.BytePack;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
-import javafx.util.Pair;
+import org.dog.core.util.Pair;
+
 
 import java.util.ArrayList;
 import java.util.Collections;

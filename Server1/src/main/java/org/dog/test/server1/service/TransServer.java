@@ -19,13 +19,9 @@ public class TransServer {
 
     @DogTccAnnotation(name = "chainTcc")
     public  String chainTcc()throws Exception{
-
         client2.tran(new TranD("abc","efg"));
-
         client3.tran(new TranD("hig","lmn"));
-
         return  "OK";
-
     }
 
 

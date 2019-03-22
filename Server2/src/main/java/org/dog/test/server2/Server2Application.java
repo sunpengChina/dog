@@ -10,13 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableEurekaClient
 public class Server2Application {
-
-
     public static void main(String[] args) {
-
         SpringApplication.run(Server2Application.class, args);
-
     }
-
-
 }

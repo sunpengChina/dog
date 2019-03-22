@@ -17,9 +17,9 @@ import org.dog.core.jms.exception.StatusException;
 import org.dog.core.jms.IBroker;
 import org.dog.core.log.IHistoryLog;
 import org.dog.core.util.IBytePackConvert;
-import javafx.util.Pair;
 import org.apache.log4j.Logger;
 import org.dog.core.event.TccAchievementEvent;
+import org.dog.core.util.Pair;
 
 import java.util.List;
 import java.util.concurrent.Executor;
