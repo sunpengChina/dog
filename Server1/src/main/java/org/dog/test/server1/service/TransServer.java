@@ -17,6 +17,13 @@ public class TransServer {
     Server3Client client3;
 
 
+    public  String chainTccNoTran()throws Exception{
+        client2.tran(new TranD("abc","efg"));
+        client3.tran(new TranD("hig","lmn"));
+        return  "OK";
+    }
+
+
     @DogTccAnnotation(name = "chainTcc")
     public  String chainTcc()throws Exception{
         client2.tran(new TranD("abc","efg"));
@@ -28,7 +35,7 @@ public class TransServer {
     @DogTccAnnotation(name = "singleTcc")
     public  String singleTcc()throws Exception{
 
-        client2.tran(new TranD("abc","efg"));
+        client3.tran(new TranD("abc","efg"));
 
         return  "OK";
 
@@ -37,7 +44,7 @@ public class TransServer {
 
     public  String noTcc()throws Exception{
 
-        client2.tran(new TranD("abc","efg"));
+        client3.tran(new TranD("abc","efg"));
 
         return  "OK";
 
