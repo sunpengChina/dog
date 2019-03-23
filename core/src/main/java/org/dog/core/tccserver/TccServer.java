@@ -16,11 +16,13 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-public class TccServer implements ITccServer{
+public class TccServer implements ITccServer {
 
     private static Logger logger = Logger.getLogger(TccServer.class);
 
@@ -39,8 +41,10 @@ public class TccServer implements ITccServer{
      */
     ExecutorService rollbackExecutor;
 
+//    private   Timer timer = new Timer();
 
-    public TccServer (ApplicationAutoConfig autoConfig, IBroker iMessage, IBytePackConvert convert, IErrorLog errorLog, IHistoryLog historylog){
+
+    public TccServer(ApplicationAutoConfig autoConfig, IBroker iMessage, IBytePackConvert convert, IErrorLog errorLog, IHistoryLog historylog) {
 
         this.runningTry = new TccBuffer();
 
@@ -52,8 +56,7 @@ public class TccServer implements ITccServer{
 
         this.rollbackExecutor = Executors.newCachedThreadPool();
 
-        listener = new TccListener(autoConfig,iMessage,convert,errorLog,runningTry,historylog,rollbackExecutor);
-
+        listener = new TccListener(autoConfig, iMessage, convert, errorLog, runningTry, historylog, rollbackExecutor);
 
 
     }
@@ -65,32 +68,47 @@ public class TccServer implements ITccServer{
 
         try {
 
-            logger.info("TCC远程调用:"+tran);
+            logger.info("TCC远程调用:" + tran);
 
             Object result = point.proceed();
 
-            logger.info("TCC返回:"+tran);
+            logger.info("TCC返回:" + tran);
 
             message.confirmTry(tran);
 
-            return  result;
+            return result;
 
         } catch (Throwable e) {
 
-            logger.info("TCC报错:"+tran);
+            logger.info("TCC报错:" + tran);
 
             logger.error(e);
 
             message.cancelTry(tran);
 
-            throw  e;
+            throw e;
 
         } finally {
 
-            /**
-             * 清空该事务
-             */
-            message.watchCallsConfirm(tran,listener);
+
+//            /**
+//             * 清空该事务
+//             */
+//            timer.schedule(new TimerTask() {
+//                public void run() {
+//
+//                    try {
+
+                        message.watchCallsConfirm(tran,listener);
+
+//                    }catch (Exception e){
+//
+//                    }
+//
+//                }
+//            }, 500);
+
+
         }
 
     }
@@ -98,13 +116,13 @@ public class TccServer implements ITccServer{
     @Override
     public void tccCall(DogTcc transaction, DogCall call, BytePack dataPack) throws ConnectException, NonexistException, InterruptedException {
 
-        message.registerCall(transaction,call,convert.objectToByteArray(dataPack));
+        message.registerCall(transaction, call, convert.objectToByteArray(dataPack));
 
-        runningTry.addCall(transaction,call,dataPack);
+        runningTry.addCall(transaction, call, dataPack);
 
-        message.watchTccTryAchievement(transaction,listener);
+        message.watchTccTryAchievement(transaction, listener);
 
-        logger.info("watch:"  + transaction );
+        logger.info("watch:" + transaction);
 
     }
 
@@ -113,9 +131,9 @@ public class TccServer implements ITccServer{
 
         this.message.connect();
 
-        message.watchOffline(listener,listener);
+        message.watchOffline(listener, listener);
 
-        logger.info(autoConfig.getApplicationname()+": started");
+        logger.info(autoConfig.getApplicationname() + ": started");
     }
 
     @Override

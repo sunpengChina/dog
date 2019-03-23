@@ -33,7 +33,7 @@ public class Server1ApplicationController {
         return  server.chainTcc();
     }
 
-    //13698ms  11165ms 10739ms 10586ms 10433ms   平均:  11325
+
     @RequestMapping("/noTcc5000")
     public String noTcc5000() throws Exception{
 
@@ -52,7 +52,7 @@ public class Server1ApplicationController {
         return  ret;
     }
 
-    //33687ms 33052ms 32851ms 35127ms 35951ms    平均 34133
+
     @RequestMapping("/singleTcc5000")
     public String singleTcc5000() throws Exception{
 
@@ -77,7 +77,7 @@ public class Server1ApplicationController {
     }
 
 
-    //50827ms 48177ms 50974ms 55395ms  43760ms   平均 39631
+
     @RequestMapping("/chainTcc5000thread")
     public String chainTcc5000thread() throws Exception{
 

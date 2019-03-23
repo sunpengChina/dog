@@ -1,4 +1,4 @@
-package org.dog.test.server2;
+package org.dog.test.server2.client;
 
 public class TranD {
 

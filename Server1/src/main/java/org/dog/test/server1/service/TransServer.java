@@ -32,6 +32,7 @@ public class TransServer {
     }
 
 
+
     @DogTccAnnotation(name = "singleTcc")
     public  String singleTcc()throws Exception{
 
@@ -44,7 +45,7 @@ public class TransServer {
 
     public  String noTcc()throws Exception{
 
-        client3.tran(new TranD("abc","efg"));
+        client2.tran(new TranD("abc","efg"));
 
         return  "OK";
 
