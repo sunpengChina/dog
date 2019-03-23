@@ -121,7 +121,7 @@ public class Server1ApplicationController {
         return  ret;
     }
 
-   //6400ms 6454ms  6473ms 6448ms  6519ms        平均 6458
+
     @RequestMapping("/chainNoTcc5000thread")
     public String chainNoTcc5000thread() throws Exception{
 
@@ -167,7 +167,7 @@ public class Server1ApplicationController {
         return  ret;
     }
 
-   //36831ms  34298ms   33069ms  35814ms  37818ms  平均 35566
+
     @RequestMapping("/singleTcc5000thread")
     public String singleTcc5000thread() throws Exception{
 
@@ -206,12 +206,12 @@ public class Server1ApplicationController {
         long endTime = System.currentTimeMillis();
 
         //在事务里，100次调用需要的时间
-        String ret = "10个线程各500次调用非链式TCC事务，调用需要的时间：，调用需要的时间：" + (endTime - startTime) + "ms";
+        String ret = "10个线程各500次调用非链式TCC事务，调用需要的时间：" + (endTime - startTime) + "ms";
 
         return  ret;
     }
 
-    //2909ms  2857ms  2844ms 2924ms 2886ms      平均 2884
+
     @RequestMapping("/singleNoTcc5000thread")
     public String singleNoTcc5000thread() throws Exception{
 
@@ -250,7 +250,7 @@ public class Server1ApplicationController {
         long endTime = System.currentTimeMillis();
 
         //在事务里，100次调用需要的时间
-        String ret = "10个线程各500次调用非链式非TCC事务，调用需要的时间：，调用需要的时间：" + (endTime - startTime) + "ms";
+        String ret = "10个线程各500次调用非链式非TCC事务，调用需要的时间：" + (endTime - startTime) + "ms";
 
         return  ret;
     }
