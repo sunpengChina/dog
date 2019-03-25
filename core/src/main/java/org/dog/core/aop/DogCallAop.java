@@ -32,7 +32,6 @@ public class DogCallAop {
 
         try {
 
-            result = pjp.proceed();
 
             DogTcc transaction = ThreadManager.getTransaction();
 
@@ -59,6 +58,11 @@ public class DogCallAop {
 
                 logger.info("非本地事务调用 callname:"+ad.Name());
             }
+
+            /**
+             * 先注册再调用
+             */
+            result = pjp.proceed();
 
         } catch (Exception e) {
 
