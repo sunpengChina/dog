@@ -3,7 +3,7 @@ package org.dog.test.server3;
 import org.dog.core.annotation.TccHandler;
 import org.dog.core.annotation.DogCallAnnotation;
 import org.dog.test.server3.dao.ReturnOrder;
-import org.dog.test.server3.dao.ReturnOrderRepository;
+//import org.dog.test.server3.dao.ReturnOrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +13,8 @@ import java.util.List;
 public class MongoServer extends TccHandler {
 
 
-    @Autowired
-    private ReturnOrderRepository returnOrderRepository;
+//    @Autowired
+//    private ReturnOrderRepository returnOrderRepository;
 
     @DogCallAnnotation(Name = "insertMongo", TccHandlerClass = MongoServer.class)
     public String insertMongo(String value){

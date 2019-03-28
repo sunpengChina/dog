@@ -3,6 +3,30 @@ package org.dog.core.entry;
 import java.io.Serializable;
 
 public class DogCall implements Serializable {
+
+    @Override
+    public int hashCode() {
+
+        String hashStr =   key + name;
+
+        return hashStr.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (obj instanceof DogCall) {
+
+            DogCall other= (DogCall) obj;
+
+            return name.equals(other.name)&& key.equals(other.key);
+
+        }
+
+        return false;
+    }
+
+
     @Override
     public String toString() {
         return "[LocalServer:    Name:"+name+"   key:"+key+"   status:"+serverStatus+"]";

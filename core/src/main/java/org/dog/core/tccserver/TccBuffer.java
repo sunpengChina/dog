@@ -3,13 +3,11 @@ package org.dog.core.tccserver;
 import org.dog.core.entry.TccContext;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
+import org.dog.core.entry.TccLock;
 import org.dog.core.util.Pair;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TccBuffer {
@@ -17,6 +15,21 @@ public class TccBuffer {
     private  final Map<DogTcc, List<Pair<DogCall, TccContext>>> localServerIndex = new ConcurrentHashMap<>();
 
     private  final  List<Pair<DogCall, TccContext>>  nomodify = Collections.unmodifiableList(new ArrayList<Pair<DogCall, TccContext>>());
+
+    public void updateLocks(DogTcc tranPath, DogCall server, Set<TccLock> locks){
+
+        List<Pair<DogCall, TccContext>> pairs = searchCalls(tranPath);
+
+        for(Pair<DogCall, TccContext> pair : pairs){
+
+            if(pair.getKey().equals(server)){
+
+                pair.getValue().getLockList().addAll(locks);
+
+            }
+        }
+    }
+
 
     public void addCall(DogTcc tranPath, DogCall server, TccContext dataPack){
 

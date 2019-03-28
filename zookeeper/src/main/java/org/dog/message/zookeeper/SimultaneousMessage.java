@@ -139,38 +139,48 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public boolean lock(DogTcc transaction, DogCall call, TccContext context)throws ConnectException,InterruptedException ,NonexistException {
-
-        byte[] oldbyte = null;
-
-        try {
-
-            oldbyte =  getConnection().getData(pathHelper.callPath(transaction,applicationName,call),false,new Stat());
-
-        }catch ( Exception e){
-
-            throwException(e);
-        }
-
-        TccContext oldContext = null;
-
-        if(oldbyte != null){
-
-            oldContext = convert.byteArrayToObject(oldbyte);
-
-        }
+    public synchronized void lock(DogTcc transaction, DogCall call, Set<TccLock> locks,TccContext oldContext )throws ConnectException,InterruptedException ,NonexistException {
 
 
         List<Op> ops = new ArrayList<Op>();
 
-        for (TccLock lock :context.getLockList()){
+        for (TccLock lock : locks){
 
-            if(!oldContext.getLockList().contains(lock)){
+            if(oldContext.getLockList().contains(lock)){
+
+                continue;
+
+            }
+
+            byte[] bytelock = null;
+
+            try {
+
+                bytelock  =  getConnection().getData(pathHelper.lockerPath(lock.getKey()),false,new Stat());
+
+            }catch (Exception e){
+
+            }
+
+            if(bytelock == null){
 
                 oldContext.getLockList().add(lock);
 
                 ops.add(Op.create(pathHelper.lockerPath(lock.getKey()),transaction.getUnique().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
+                logger.info("Lock:"+lock.getKey());
+
+            }else {
+
+                if(new String(bytelock).equals(transaction.getUnique())){
+
+                    logger.info("ReentrantLock:" + lock.getKey());
+
+                }else{
+
+                    throw  new ConnectException("Can't get the lock");
+
+                }
             }
 
         }
@@ -181,14 +191,11 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
             getConnection().multi(ops);
 
-            return true;
-
         }catch (Exception e){
 
+            throwException(e);
 
-            return false;
         }
-
 
     }
 
@@ -198,7 +205,6 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
         ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(transaction,applicationName),true,null);
 
         List<Op> ops = new ArrayList<Op>();
-
 
         Set<TccLock> newLocks = new HashSet<>();
 

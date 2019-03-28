@@ -4,6 +4,7 @@ import org.dog.core.ApplicationAutoConfig;
 import org.dog.core.entry.TccContext;
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
+import org.dog.core.entry.TccLock;
 import org.dog.core.listener.ITccListener;
 import org.dog.core.log.IErrorLog;
 import org.dog.core.jms.exception.ConnectException;
@@ -16,18 +17,19 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
 public class TccServer implements ITccServer {
+
     @Override
-    public boolean lock(DogTcc transaction, DogCall call, TccContext dataPack) {
+    public void lock(DogTcc transaction, DogCall call, Set<TccLock> locks,TccContext context) throws ConnectException, InterruptedException, NonexistException {
 
+         message.lock(transaction,call,locks,context);
 
-
-
-        return false;
     }
 
     private static Logger logger = Logger.getLogger(TccServer.class);
@@ -47,7 +49,6 @@ public class TccServer implements ITccServer {
      */
     ExecutorService rollbackExecutor;
 
-//    private   Timer timer = new Timer();
 
 
     public TccServer(ApplicationAutoConfig autoConfig, IBroker iMessage, IBytePackConvert convert, IErrorLog errorLog, IHistoryLog historylog) {
@@ -71,6 +72,7 @@ public class TccServer implements ITccServer {
     public void setCallContext(DogTcc transaction, DogCall call, TccContext dataPack) throws ConnectException, NonexistException, InterruptedException {
 
         message.setCallContext(transaction,call,dataPack);
+
     }
 
     @Override

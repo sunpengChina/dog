@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Aspect
-public class DogCallAop implements LockPool {
+public class DogCallAop{
 
 
     @Autowired
@@ -75,7 +75,7 @@ public class DogCallAop implements LockPool {
 
                 tccHandler =  (ITccHandler) ApplicationUtil.getApplicationContext().getBean(tccHandlerClass);
 
-                tccHandler.preTryHandler(pjp,transaction,localcaller,this);
+                tccHandler.preTryHandler(pjp,transaction,localcaller,server,tccContext);
 
                 server.setCallContext(transaction,localcaller,tccContext);
 
@@ -108,12 +108,5 @@ public class DogCallAop implements LockPool {
         return result;
     }
 
-    @Override
-    public boolean lock(DogTcc transaction, DogCall call, TccContext dataPack) {
 
-
-
-
-        return false;
-    }
 }

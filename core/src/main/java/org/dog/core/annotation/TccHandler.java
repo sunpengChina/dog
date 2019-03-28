@@ -4,6 +4,11 @@ import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
+import org.dog.core.entry.TccContext;
+import org.dog.core.entry.TccLock;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public  class TccHandler implements ITccHandler{
 
@@ -27,7 +32,22 @@ public  class TccHandler implements ITccHandler{
     }
 
     @Override
-    public void preTryHandler(ProceedingJoinPoint pjp, DogTcc tcc, DogCall call,LockPool lockPool) {
+    public void preTryHandler(ProceedingJoinPoint pjp, DogTcc tcc, DogCall call, LockPool lockPool, TccContext tccContext) {
+
+        Set<TccLock> lockSet = new HashSet<>();
+
+        lockSet.add(new TccLock("123"));
+
+        try {
+
+            lockPool.lock(tcc,call,lockSet,tccContext);
+
+        }catch (Exception e){
+
+            logger.error(e);
+        }
+
+
         logger.info("prehandler");
     }
 
