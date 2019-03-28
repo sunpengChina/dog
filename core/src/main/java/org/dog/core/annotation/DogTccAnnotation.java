@@ -8,5 +8,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface DogTccAnnotation {
-    String name() default "default";
+    String Name()  default "";
 }

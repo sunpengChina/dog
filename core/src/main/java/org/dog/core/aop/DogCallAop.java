@@ -1,7 +1,11 @@
 package org.dog.core.aop;
 
+import org.dog.core.ApplicationAutoConfig;
 import org.dog.core.annotation.DogCallAnnotation;
-import org.dog.core.entry.BytePack;
+import org.dog.core.annotation.ITccHandler;
+import org.dog.core.annotation.LockPool;
+import org.dog.core.common.ApplicationUtil;
+import org.dog.core.entry.TccContext;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
 import org.dog.core.tccserver.ITccServer;
@@ -16,7 +20,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Aspect
-public class DogCallAop {
+public class DogCallAop implements LockPool {
+
+
+    @Autowired
+    ApplicationAutoConfig config;
 
 
     private static Logger logger = Logger.getLogger(DogCallAop.class);
@@ -28,35 +36,52 @@ public class DogCallAop {
     @Around("@annotation(org.dog.core.annotation.DogCallAnnotation)  && @annotation(ad) ")
     public Object doAroundtransaction(ProceedingJoinPoint pjp, DogCallAnnotation ad) throws Throwable {
 
+        String callName = (ad.Name().equals("")? pjp.getSignature().toString().replace('.','_').replace(',','_').replace(' ','_').replace('(','_').replace(')','_'):ad.Name());
+
         Object result = null;
+
+        ITccHandler tccHandler = null;
+
+        DogTcc transaction = null;
+
+        DogCall localcaller = null;
 
         try {
 
 
-            DogTcc transaction = ThreadManager.getTransaction();
+            transaction = ThreadManager.getTransaction();
 
             /**
              * 说明在事务里面执行
              */
             if(transaction!=null){
 
-                logger.info("本地事务调用："+transaction.toString()+": callname:"+ad.Name());
+                logger.info("本地事务调用："+transaction.toString()+": callname:"+callName);
 
-                DogCall localcaller = new DogCall(ad.Name());
-
-                /**
-                 * 将反射需要的类和参数封装起来
-                 */
-                BytePack pack = new BytePack(ad.RollbackClass().getName(),pjp.getArgs());
+                localcaller = new DogCall(callName,config.getApplicationname());
 
                 /**
-                 *
+                 * 事务上下文
                  */
-                server.tccCall(transaction,localcaller,pack);
+                TccContext tccContext = new TccContext(ad.TccHandlerClass().getName(),pjp.getArgs());
+
+                /**
+                 * 注册call
+                 */
+                server.tccCall(transaction,localcaller,tccContext);
+
+                // 注册前的操作
+                Class<?> tccHandlerClass  = Class.forName(tccContext.getClassName());
+
+                tccHandler =  (ITccHandler) ApplicationUtil.getApplicationContext().getBean(tccHandlerClass);
+
+                tccHandler.preTryHandler(pjp,transaction,localcaller,this);
+
+                server.setCallContext(transaction,localcaller,tccContext);
 
             }else{
 
-                logger.info("非本地事务调用 callname:"+ad.Name());
+                logger.info("非本地事务调用 callname:"+callName);
             }
 
             /**
@@ -65,6 +90,11 @@ public class DogCallAop {
             result = pjp.proceed();
 
         } catch (Exception e) {
+
+            if(tccHandler !=null) {
+
+                tccHandler.exceptionHandler(pjp, transaction, localcaller,e);
+            }
 
             logger.error("本地调用失败:"+e);
 
@@ -76,5 +106,14 @@ public class DogCallAop {
         }
 
         return result;
+    }
+
+    @Override
+    public boolean lock(DogTcc transaction, DogCall call, TccContext dataPack) {
+
+
+
+
+        return false;
     }
 }

@@ -1,9 +1,9 @@
 package org.dog.core.tccserver;
 
 import org.dog.core.ApplicationAutoConfig;
-import org.dog.core.annotation.TryCompleteHandler;
+import org.dog.core.annotation.ITccHandler;
 import org.dog.core.common.ApplicationUtil;
-import org.dog.core.entry.BytePack;
+import org.dog.core.entry.TccContext;
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogTccStatus;
@@ -108,7 +108,7 @@ public class TccListener implements ITccListener {
 
         for(Pair<DogCall,byte[]> e:offlineDogCalls){
 
-            runningTry.addCall(var1.getTcc(),e.getKey(),(BytePack) convert.byteArrayToObject(e.getValue()));
+            runningTry.addCall(var1.getTcc(),e.getKey(),(TccContext) convert.byteArrayToObject(e.getValue()));
 
         }
 
@@ -129,7 +129,7 @@ public class TccListener implements ITccListener {
 
         DogTcc transaction = var1.getSource();
 
-        List<Pair<DogCall, BytePack>> calls = runningTry.searchCalls(transaction);
+        List<Pair<DogCall, TccContext>> calls = runningTry.searchCalls(transaction);
 
         runningTry.deletTry(transaction);
 
@@ -137,7 +137,7 @@ public class TccListener implements ITccListener {
 
             if (transaction.getStatus().equals(DogTccStatus.CONFIRM) || transaction.getStatus().equals(DogTccStatus.CANCEL)) {
 
-                for (Pair<DogCall, BytePack> e : calls) {
+                for (Pair<DogCall, TccContext> e : calls) {
 
                     tryCompleteHandlerExecutor(transaction, e.getKey(), e.getValue());
 
@@ -160,9 +160,9 @@ public class TccListener implements ITccListener {
      *
      * @param tran
      * @param call
-     * @param pack
+     * @param context
      */
-    protected void tryCompleteHandlerExecutor(DogTcc tran, DogCall call, BytePack pack) {
+    protected void tryCompleteHandlerExecutor(DogTcc tran, DogCall call, TccContext context) {
 
         executor.execute(new Runnable() {
 
@@ -171,22 +171,22 @@ public class TccListener implements ITccListener {
 
                 try {
 
-                    Class<?> rollbackClass  = Class.forName(pack.getClassName());
+                    Class<?> rollbackClass  = Class.forName(context.getClassName());
 
-                    TryCompleteHandler rollback =  (TryCompleteHandler)ApplicationUtil.getApplicationContext().getBean(rollbackClass);
+                    ITccHandler rollback =  (ITccHandler)ApplicationUtil.getApplicationContext().getBean(rollbackClass);
 
                     //TryCompleteHandler rollback = (TryCompleteHandler) rollbackClass.newInstance();
 
                     if (tran.isSuccess()) {
 
-                        rollback.confirm(pack.getArgs());
+                        rollback.confirm(context.getArgs(),tran,call);
 
                     } else {
 
-                        rollback.cancel(pack.getArgs());
+                        rollback.cancel(context.getArgs(),tran,call);
                     }
 
-                    message.confirmCall(tran, call);
+                    message.confirmCall(tran, call,context);
 
 
                 } catch (Exception f) {
@@ -195,11 +195,11 @@ public class TccListener implements ITccListener {
 
                     if (tran.isSuccess()) {
 
-                        errorLog.confirmError(tran, call, pack);
+                        errorLog.confirmError(tran, call, context);
 
                     } else {
 
-                        errorLog.cancelError(tran, call, pack);
+                        errorLog.cancelError(tran, call, context);
                     }
 
                 }

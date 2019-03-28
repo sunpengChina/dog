@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface DogCallAnnotation {
-    String Name() default "default";
-    Class<? extends TryCompleteHandler> RollbackClass() ;
+    String Name() default "";
+    Class<? extends TccHandler> TccHandlerClass() ;
 }

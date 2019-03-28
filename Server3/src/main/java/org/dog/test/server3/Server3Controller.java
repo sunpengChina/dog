@@ -35,4 +35,12 @@ public class Server3Controller {
         return "OK";
     }
 
+    @RequestMapping("/test")
+    public String tran() {
+
+        mongoServer.insertMongo("1234");
+
+        return "OK";
+    }
+
 }

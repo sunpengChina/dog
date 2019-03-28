@@ -42,7 +42,7 @@ public class Pair<K,V> implements Serializable {
      * <p><code>String</code> representation of this
      * <code>Pair</code>.</p>
      *
-     * <p>The default name/value delimiter '=' is always used.</p>
+     * <p>The default Name/value delimiter '=' is always used.</p>
      *
      *  @return <code>String</code> representation of this <code>Pair</code>
      */
@@ -54,18 +54,18 @@ public class Pair<K,V> implements Serializable {
     /**
      * <p>Generate a hash code for this <code>Pair</code>.</p>
      *
-     * <p>The hash code is calculated using both the name and
+     * <p>The hash code is calculated using both the Name and
      * the value of the <code>Pair</code>.</p>
      *
      * @return hash code for this <code>Pair</code>
      */
     @Override
     public int hashCode() {
-        // name's hashCode is multiplied by an arbitrary prime number (13)
+        // Name's hashCode is multiplied by an arbitrary prime number (13)
         // in order to make sure there is a difference in the hashCode between
         // these two parameters:
-        //  name: a  value: aa
-        //  name: aa value: a
+        //  Name: a  value: aa
+        //  Name: aa value: a
         return key.hashCode() * 13 + (value == null ? 0 : value.hashCode());
     }
 

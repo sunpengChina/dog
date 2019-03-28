@@ -16,7 +16,7 @@ public class Server2Controller {
     private final AtomicLong counter = new AtomicLong();
 
     @Autowired
-    MysqlServer mysqlServer;
+    AbstractTccHandler mysqlServer;
 
 
     @Autowired

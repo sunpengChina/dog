@@ -1,14 +1,14 @@
 package org.dog.test.server3;
 
-import org.dog.core.annotation.AbstractTryCompleteHandler;
 import org.dog.core.annotation.DogCallAnnotation;
+import org.dog.core.annotation.TccHandler;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MysqlServer extends AbstractTryCompleteHandler {
+public class MysqlServer extends TccHandler {
 
 
-    @DogCallAnnotation(Name = "insertMysql",RollbackClass = MysqlServer.class)
+    @DogCallAnnotation(Name = "insertMysql", TccHandlerClass = MysqlServer.class)
     public String insertMysql(String value){
 
         System.out.println("insertMysql");

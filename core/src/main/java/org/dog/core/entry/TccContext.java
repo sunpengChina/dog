@@ -1,8 +1,20 @@
 package org.dog.core.entry;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Set;
 
-public class BytePack implements Serializable {
+public class TccContext implements Serializable {
+
+    private Set<TccLock> lockList;
+
+    public Set<TccLock> getLockList() {
+        return lockList;
+    }
+
+    public void setLockList(Set<TccLock> lockList) {
+        this.lockList = lockList;
+    }
 
     public String getClassName() {
         return className;
@@ -24,7 +36,7 @@ public class BytePack implements Serializable {
 
     Object[] args = {};
 
-    public BytePack(String className,Object[] args){
+    public TccContext(String className, Object[] args){
 
         this.className = className;
 
@@ -32,7 +44,7 @@ public class BytePack implements Serializable {
 
     }
 
-    public BytePack(){
+    public TccContext(){
 
 
     }

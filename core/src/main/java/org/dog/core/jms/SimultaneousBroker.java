@@ -1,12 +1,14 @@
 package org.dog.core.jms;
 
+import org.dog.core.annotation.LockPool;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
+import org.dog.core.entry.TccContext;
 import org.dog.core.jms.exception.ConnectException;
 import org.dog.core.jms.exception.NonexistException;
 import org.dog.core.jms.exception.NotStartTransactionException;
 
-public interface SimultaneousBroker {
+public interface SimultaneousBroker extends LockPool {
 
     void registerTcc(DogTcc tcc) throws ConnectException, NonexistException,InterruptedException;
 
@@ -16,8 +18,12 @@ public interface SimultaneousBroker {
 
     void clearTcc(DogTcc tcc) throws ConnectException, InterruptedException;
 
-    void registerCall(DogTcc tcc, DogCall call, byte[] data)  throws ConnectException, NonexistException,InterruptedException;
+    void registerCall(DogTcc tcc, DogCall call, TccContext context)  throws ConnectException, NonexistException,InterruptedException;
 
-    void confirmCall(DogTcc tcc, DogCall call) throws ConnectException, InterruptedException;
+    void setCallContext(DogTcc tcc, DogCall call, TccContext context)  throws ConnectException, NonexistException,InterruptedException;
+
+    void confirmCall(DogTcc tcc, DogCall call,TccContext context) throws ConnectException, InterruptedException;
+
+
 
 }

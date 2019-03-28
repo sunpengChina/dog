@@ -1,10 +1,8 @@
 package org.dog.message.zookeeper;
 
 import org.apache.zookeeper.Op;
-import org.dog.core.entry.DogTcc;
-import org.dog.core.entry.DogTccStatus;
-import org.dog.core.entry.DogCall;
-import org.dog.core.entry.DogCallStatus;
+import org.apache.zookeeper.data.Stat;
+import org.dog.core.entry.*;
 import org.dog.core.jms.exception.ConnectException;
 import org.dog.core.jms.exception.NonexistException;
 import org.dog.core.jms.exception.NotStartTransactionException;
@@ -13,17 +11,25 @@ import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.dog.core.util.IBytePackConvert;
 import org.dog.message.zookeeper.util.ZkHelp;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.dog.message.zookeeper.util.ZkHelp.throwException;
 
 
 public abstract class SimultaneousMessage extends ConnectableMessage implements IBroker {
 
+    @Autowired
+    IBytePackConvert convert;
+
     private static Logger logger = Logger.getLogger(SimultaneousMessage.class);
+
 
     public SimultaneousMessage(String applicationName, ZookeeperConfig autoConfig) {
 
@@ -110,14 +116,130 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public synchronized void registerCall(DogTcc transaction, DogCall call, byte[] data) throws ConnectException,InterruptedException ,NonexistException {
+    public synchronized void setCallContext(DogTcc tcc, DogCall call, TccContext context) throws ConnectException, NonexistException, InterruptedException {
 
+        ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(tcc,applicationName),false,null);
+
+        List<Op> ops = new ArrayList<Op>();
+
+        ops.add(Op.setData(pathHelper.callPath(tcc,applicationName,call),convert.objectToByteArray(context),AnyVersion));
+
+        try {
+
+            getConnection().multi(ops);
+
+            logger.info(tcc +" " +"设置数据:" + call +" OK");
+
+        }catch (Exception e){
+
+            logger.error(e);
+
+        }
+
+    }
+
+    @Override
+    public boolean lock(DogTcc transaction, DogCall call, TccContext context)throws ConnectException,InterruptedException ,NonexistException {
+
+        byte[] oldbyte = null;
+
+        try {
+
+            oldbyte =  getConnection().getData(pathHelper.callPath(transaction,applicationName,call),false,new Stat());
+
+        }catch ( Exception e){
+
+            throwException(e);
+        }
+
+        TccContext oldContext = null;
+
+        if(oldbyte != null){
+
+            oldContext = convert.byteArrayToObject(oldbyte);
+
+        }
+
+
+        List<Op> ops = new ArrayList<Op>();
+
+        for (TccLock lock :context.getLockList()){
+
+            if(!oldContext.getLockList().contains(lock)){
+
+                oldContext.getLockList().add(lock);
+
+                ops.add(Op.create(pathHelper.lockerPath(lock.getKey()),transaction.getUnique().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+            }
+
+        }
+
+        ops.add(Op.setData(pathHelper.callPath(transaction,applicationName,call),convert.objectToByteArray(oldContext),AnyVersion));
+
+        try {
+
+            getConnection().multi(ops);
+
+            return true;
+
+        }catch (Exception e){
+
+
+            return false;
+        }
+
+
+    }
+
+    @Override
+    public synchronized void registerCall(DogTcc transaction, DogCall call, TccContext context) throws ConnectException,InterruptedException ,NonexistException {
 
         ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(transaction,applicationName),true,null);
 
         List<Op> ops = new ArrayList<Op>();
 
-        ops.add(Op.create(pathHelper.callPath(transaction,applicationName,call),data,ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+        Set<TccLock> newLocks = new HashSet<>();
+
+        for(TccLock lock : context.getLockList()){
+
+            byte[] tcc = null;
+
+            try {
+
+                tcc =  getConnection().getData(pathHelper.lockerPath(lock.getKey()),false,new Stat());
+
+            }catch (Exception e){
+
+            }
+
+            if(tcc != null){
+
+                if(new String(tcc).equals(transaction.getUnique())){
+
+                    logger.info("ReentrantLock:" + lock.getKey());
+
+                }else{
+
+                    throw  new ConnectException("锁已被占用");
+
+                }
+
+            }else{
+
+                ops.add(Op.create(pathHelper.lockerPath(lock.getKey()),transaction.getUnique().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+                newLocks.add(lock);
+
+                logger.info("Lock:" + lock.getKey());
+            }
+
+        }
+
+        context.setLockList(newLocks);
+
+        ops.add(Op.create(pathHelper.callPath(transaction,applicationName,call),convert.objectToByteArray(context),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
         ops.add(Op.create(pathHelper.callMonitorPath(transaction,applicationName,call),null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
 
@@ -129,15 +251,19 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         }catch (Exception e){
 
-            logger.info(transaction +" " +"Start Call:" + call +" error");
+            logger.error(transaction +" " +"Start Call:" + call +" error");
+
+            throw  new ConnectException();
         }
+
 
 
 
     }
 
     @Override
-    public synchronized void confirmCall(DogTcc transaction, DogCall call) throws ConnectException, InterruptedException {
+    public synchronized void confirmCall(DogTcc transaction, DogCall call,TccContext context) throws ConnectException, InterruptedException {
+
 
         try {
 
@@ -146,6 +272,14 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
             ops.add(Op.delete(pathHelper.callMonitorPath(transaction,applicationName,call),AnyVersion));
 
             ops.add(Op.delete(pathHelper.callPath(transaction,applicationName,call),AnyVersion));
+
+            for(TccLock lock : context.getLockList()){
+
+                logger.info("unLock:" + lock.getKey());
+
+                ops.add(Op.delete(pathHelper.lockerPath(lock.getKey()),AnyVersion));
+
+            }
 
             getConnection().multi(ops);
 

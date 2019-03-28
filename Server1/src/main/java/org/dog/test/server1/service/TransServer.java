@@ -24,7 +24,7 @@ public class TransServer {
     }
 
 
-    @DogTccAnnotation(name = "chainTcc")
+    @DogTccAnnotation(Name = "chainTcc")
     public  String chainTcc()throws Exception{
         client2.tran(new TranD("abc","efg"));
  //      client3.tran(new TranD("hig","lmn"));
@@ -33,7 +33,7 @@ public class TransServer {
 
 
 
-    @DogTccAnnotation(name = "singleTcc")
+    @DogTccAnnotation(Name = "singleTcc")
     public  String singleTcc()throws Exception{
 
         client3.tran(new TranD("abc","efg"));

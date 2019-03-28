@@ -31,6 +31,8 @@ public class DogTccAop {
     @Around("@annotation(org.dog.core.annotation.DogTccAnnotation)  && @annotation(ad) ")
     public Object doAroundtransaction(ProceedingJoinPoint pjp, DogTccAnnotation ad) throws Throwable {
 
+        String tccName = (ad.Name().equals("") ? pjp.getSignature().toString().replace('.','_').replace(',','_').replace(' ','_').replace('(','_').replace(')','_'):ad.Name());
+
 
         if(ThreadManager.exsit()){
 
@@ -39,7 +41,7 @@ public class DogTccAop {
 
         }else{
 
-            DogTcc transaction = new DogTcc(applicationAutoConfig.getApplicationname(),ad.name());
+            DogTcc transaction = new DogTcc(applicationAutoConfig.getApplicationname(),tccName);
 
             logger.info("createTransaction:"+transaction.toString());
 

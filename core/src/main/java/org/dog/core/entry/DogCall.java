@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class DogCall implements Serializable {
     @Override
     public String toString() {
-        return "[LocalServer:    name:"+name+"   key:"+key+"   status:"+serverStatus+"]";
+        return "[LocalServer:    Name:"+name+"   key:"+key+"   status:"+serverStatus+"]";
     }
 
     private String key;
@@ -23,12 +23,12 @@ public class DogCall implements Serializable {
     }
 
 
-    public DogCall(String name) {
-        this.name = name;
-        this.key = String.valueOf(this.hashCode());
-        this.serverStatus = DogCallStatus.TRY;
-
-    }
+//    public DogCall(String Name) {
+//        this.Name = Name;
+//        this.key = String.valueOf(this.hashCode());
+//        this.serverStatus = DogCallStatus.TRY;
+//
+//    }
 
     public DogCall(String name, String key) {
         this.name = name;

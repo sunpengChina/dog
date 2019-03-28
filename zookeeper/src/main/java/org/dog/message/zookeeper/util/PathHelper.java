@@ -15,6 +15,11 @@ public class PathHelper {
 
     private final String applicationName;
 
+    public  String lockerPath(String lockkey){
+
+        return linkPath(zookeepWorkPath, lockkey);
+    }
+
     public PathHelper(String zookeepWorkPath, String applicationName) {
 
         this.zookeepWorkPath = zookeepWorkPath;

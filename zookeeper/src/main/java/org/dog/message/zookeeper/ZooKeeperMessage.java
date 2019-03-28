@@ -244,7 +244,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements Asynchronou
                         continue;
                     }
 
-                    DogCall call = new DogCall(callName);
+                    DogCall call = new DogCall(callName,applicationName);
 
                     byte[] data = getConnection().getData(callPath, false, new Stat());
 

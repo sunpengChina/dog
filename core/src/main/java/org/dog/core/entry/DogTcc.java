@@ -4,6 +4,11 @@ import java.io.Serializable;
 
 public class DogTcc implements Serializable {
 
+    public String getUnique(){
+        return application + key + name;
+    }
+
+
     @Override
     public int hashCode() {
 
@@ -28,7 +33,7 @@ public class DogTcc implements Serializable {
 
     @Override
     public String toString() {
-        return "[DogTran:  application:"+application+"    name:"+name+"   key:"+key+" status"+status+"]";
+        return "[DogTran:  application:"+application+"    Name:"+name+"   key:"+key+" status"+status+"]";
     }
 
     public final  static  String NameHeader = "DogName";

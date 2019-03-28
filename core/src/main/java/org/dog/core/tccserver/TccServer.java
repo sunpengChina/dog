@@ -1,7 +1,7 @@
 package org.dog.core.tccserver;
 
 import org.dog.core.ApplicationAutoConfig;
-import org.dog.core.entry.BytePack;
+import org.dog.core.entry.TccContext;
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.listener.ITccListener;
@@ -16,13 +16,19 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
 public class TccServer implements ITccServer {
+    @Override
+    public boolean lock(DogTcc transaction, DogCall call, TccContext dataPack) {
+
+
+
+
+        return false;
+    }
 
     private static Logger logger = Logger.getLogger(TccServer.class);
 
@@ -62,6 +68,12 @@ public class TccServer implements ITccServer {
     }
 
     @Override
+    public void setCallContext(DogTcc transaction, DogCall call, TccContext dataPack) throws ConnectException, NonexistException, InterruptedException {
+
+        message.setCallContext(transaction,call,dataPack);
+    }
+
+    @Override
     public Object tccTry(DogTcc tran, ProceedingJoinPoint point) throws Throwable {
 
         message.registerTcc(tran);
@@ -90,35 +102,18 @@ public class TccServer implements ITccServer {
 
         } finally {
 
-
-//            /**
-//             * 清空该事务
-//             */
-//            timer.schedule(new TimerTask() {
-//                public void run() {
-//
-//                    try {
-
-                        message.watchCallsConfirm(tran,listener);
-
-//                    }catch (Exception e){
-//
-//                    }
-//
-//                }
-//            }, 500);
-
+            message.watchCallsConfirm(tran,listener);
 
         }
 
     }
 
     @Override
-    public void tccCall(DogTcc transaction, DogCall call, BytePack dataPack) throws ConnectException, NonexistException, InterruptedException {
+    public void tccCall(DogTcc transaction, DogCall call, TccContext context) throws ConnectException, NonexistException, InterruptedException {
 
-        message.registerCall(transaction, call, convert.objectToByteArray(dataPack));
+        message.registerCall(transaction, call, context);
 
-        runningTry.addCall(transaction, call, dataPack);
+        runningTry.addCall(transaction, call, context);
 
         message.watchTccTryAchievement(transaction, listener);
 

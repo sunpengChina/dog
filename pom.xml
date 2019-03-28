@@ -16,6 +16,7 @@
         <module>zookeeper</module>
         <module>core</module>
         <module>protostuff</module>
+        <module>mongodb</module>
     </modules>
 
 

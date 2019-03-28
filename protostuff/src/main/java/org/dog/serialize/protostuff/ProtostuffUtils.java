@@ -1,6 +1,6 @@
 package org.dog.serialize.protostuff;
 
-import org.dog.core.entry.BytePack;
+import org.dog.core.entry.TccContext;
 import org.dog.core.util.IBytePackConvert;
 import io.protostuff.LinkedBuffer;
 import io.protostuff.ProtostuffIOUtil;
@@ -17,10 +17,10 @@ public class ProtostuffUtils implements IBytePackConvert {
 
     }
 
-    private static  Schema<BytePack>  schema =  RuntimeSchema.getSchema(BytePack.class);
+    private static  Schema<TccContext>  schema =  RuntimeSchema.getSchema(TccContext.class);
 
     @Override
-    public byte[] objectToByteArray(BytePack obj) {
+    public byte[] objectToByteArray(TccContext obj) {
 
         byte[] data;
 
@@ -37,9 +37,9 @@ public class ProtostuffUtils implements IBytePackConvert {
     }
 
     @Override
-    public BytePack byteArrayToObject(byte[] bytes) {
+    public TccContext byteArrayToObject(byte[] bytes) {
 
-        BytePack obj = schema.newMessage();
+        TccContext obj = schema.newMessage();
 
         ProtostuffIOUtil.mergeFrom(bytes, obj, schema);
 

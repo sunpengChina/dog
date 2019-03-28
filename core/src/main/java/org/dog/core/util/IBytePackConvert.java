@@ -1,8 +1,8 @@
 package org.dog.core.util;
 
-import org.dog.core.entry.BytePack;
+import org.dog.core.entry.TccContext;
 
 public interface IBytePackConvert {
-     byte[] objectToByteArray(BytePack obj);
-     BytePack byteArrayToObject(byte[] bytes);
+     byte[] objectToByteArray(TccContext obj);
+     TccContext byteArrayToObject(byte[] bytes);
 }
