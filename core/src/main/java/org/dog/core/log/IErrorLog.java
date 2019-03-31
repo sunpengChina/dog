@@ -7,9 +7,9 @@ import org.dog.core.entry.DogCall;
 
 public interface IErrorLog {
 
-    void  confirmError(DogTcc dogTran, DogCall call, TccContext pack);
+    void  confirmError(DogTcc dogTran, DogCall call, TccContext context);
 
-    void  cancelError(DogTcc dogTran, DogCall call, TccContext pack);
+    void  cancelError(DogTcc dogTran, DogCall call, TccContext context);
 
 
 }

@@ -3,12 +3,12 @@ package org.dog.core.aop;
 import org.dog.core.ApplicationAutoConfig;
 import org.dog.core.annotation.DogCallAnnotation;
 import org.dog.core.annotation.ITccHandler;
-import org.dog.core.annotation.LockPool;
 import org.dog.core.common.ApplicationUtil;
 import org.dog.core.entry.TccContext;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
 import org.dog.core.tccserver.ITccServer;
+import org.dog.core.util.Pair;
 import org.dog.core.util.ThreadManager;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -16,6 +16,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import static org.dog.core.util.ThreadManager.clearCallAndContext;
 
 
 @Component
@@ -65,17 +67,19 @@ public class DogCallAop{
                  */
                 TccContext tccContext = new TccContext(ad.TccHandlerClass().getName(),pjp.getArgs());
 
+                ThreadManager.setCallAndContext(new Pair<DogCall,TccContext>(localcaller,tccContext));
+
                 /**
                  * 注册call
                  */
                 server.tccCall(transaction,localcaller,tccContext);
 
-                // 注册前的操作
+                // 调用逻辑前的操作
                 Class<?> tccHandlerClass  = Class.forName(tccContext.getClassName());
 
                 tccHandler =  (ITccHandler) ApplicationUtil.getApplicationContext().getBean(tccHandlerClass);
 
-                tccHandler.preTryHandler(pjp,transaction,localcaller,server,tccContext);
+                tccHandler.preTryHandler(pjp,transaction,localcaller,server);
 
                 server.setCallContext(transaction,localcaller,tccContext);
 
@@ -88,6 +92,11 @@ public class DogCallAop{
              * 先注册再调用
              */
             result = pjp.proceed();
+
+            /*
+            清理call的上下文
+             */
+            clearCallAndContext();
 
         } catch (Exception e) {
 

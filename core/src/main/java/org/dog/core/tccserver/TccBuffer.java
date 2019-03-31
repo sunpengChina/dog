@@ -16,21 +16,6 @@ public class TccBuffer {
 
     private  final  List<Pair<DogCall, TccContext>>  nomodify = Collections.unmodifiableList(new ArrayList<Pair<DogCall, TccContext>>());
 
-    public void updateLocks(DogTcc tranPath, DogCall server, Set<TccLock> locks){
-
-        List<Pair<DogCall, TccContext>> pairs = searchCalls(tranPath);
-
-        for(Pair<DogCall, TccContext> pair : pairs){
-
-            if(pair.getKey().equals(server)){
-
-                pair.getValue().getLockList().addAll(locks);
-
-            }
-        }
-    }
-
-
     public void addCall(DogTcc tranPath, DogCall server, TccContext dataPack){
 
         if(localServerIndex.containsKey(tranPath)){

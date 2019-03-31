@@ -1,6 +1,6 @@
 package org.dog.core.jms;
 
-import org.dog.core.annotation.LockPool;
+import org.dog.core.common.LockPool;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.TccContext;

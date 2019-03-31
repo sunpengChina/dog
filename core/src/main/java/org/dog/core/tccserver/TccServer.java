@@ -14,6 +14,7 @@ import org.dog.core.log.IHistoryLog;
 import org.dog.core.util.IBytePackConvert;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.dog.core.util.ThreadManager;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -26,9 +27,9 @@ import java.util.concurrent.Executors;
 public class TccServer implements ITccServer {
 
     @Override
-    public void lock(DogTcc transaction, DogCall call, Set<TccLock> locks,TccContext context) throws ConnectException, InterruptedException, NonexistException {
+    public  Set<TccLock>  lock(DogTcc transaction, DogCall call, Set<TccLock> locks) throws ConnectException, InterruptedException, NonexistException {
 
-         message.lock(transaction,call,locks,context);
+        return message.lock(transaction,call,locks);
 
     }
 
@@ -42,7 +43,6 @@ public class TccServer implements ITccServer {
 
     private ApplicationAutoConfig autoConfig;
 
-    private IBytePackConvert convert;
 
     /**
      * 回调事务线程
@@ -59,8 +59,6 @@ public class TccServer implements ITccServer {
 
         this.autoConfig = autoConfig;
 
-        this.convert = convert;
-
         this.rollbackExecutor = Executors.newCachedThreadPool();
 
         listener = new TccListener(autoConfig, iMessage, convert, errorLog, runningTry, historylog, rollbackExecutor);
@@ -72,6 +70,13 @@ public class TccServer implements ITccServer {
     public void setCallContext(DogTcc transaction, DogCall call, TccContext dataPack) throws ConnectException, NonexistException, InterruptedException {
 
         message.setCallContext(transaction,call,dataPack);
+
+    }
+
+    @Override
+    public  Set<TccLock>  lock(Set<TccLock> locks) throws ConnectException, InterruptedException, NonexistException {
+
+       return  message.lock(ThreadManager.getTransaction(),ThreadManager.getDogCall(),locks);
 
     }
 

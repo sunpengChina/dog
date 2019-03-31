@@ -1,6 +1,8 @@
 package org.dog.test.server3;
 
+import org.dog.test.server3.dao.ReturnOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,10 +37,16 @@ public class Server3Controller {
         return "OK";
     }
 
-    @RequestMapping("/test")
-    public String tran() {
+    @RequestMapping("/returnOrder")
+    public String tran(@RequestBody ReturnOrder returnOrder) {
 
-        mongoServer.insertMongo("1234");
+        return  mongoServer.insertReturnOrder(returnOrder);
+    }
+
+    @RequestMapping("/test/{value}")
+    public String tran(@PathVariable String value) {
+
+        mongoServer.insertMongo(value);
 
         return "OK";
     }

@@ -16,7 +16,8 @@
         <module>zookeeper</module>
         <module>core</module>
         <module>protostuff</module>
-        <module>mongodb</module>
+        <module>dbcore</module>
+        <module>springmongo</module>
     </modules>
 
 

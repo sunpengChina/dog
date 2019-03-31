@@ -26,8 +26,6 @@ public class ApplicationAutoConfig {
 
     private String applicationname;
 
-
-
     @Bean
     @ConditionalOnMissingBean(IHistoryLog.class)
     public IHistoryLog historyLog() {

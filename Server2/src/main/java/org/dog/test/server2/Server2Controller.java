@@ -31,16 +31,8 @@ public class Server2Controller {
     @RequestMapping("/tran")
     public String tran(@RequestBody TranD trans) {
 
-        mysqlServer.insertMysql(trans.getValue2());
-
-        try {
-
-            client3.tran(trans);
-
-        }catch (Exception e){
-
-        }
         return "OK";
+
     }
 
 }

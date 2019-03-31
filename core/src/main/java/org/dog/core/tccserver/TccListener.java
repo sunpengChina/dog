@@ -179,11 +179,11 @@ public class TccListener implements ITccListener {
 
                     if (tran.isSuccess()) {
 
-                        rollback.confirm(context.getArgs(),tran,call);
+                        rollback.confirm(context,tran,call);
 
                     } else {
 
-                        rollback.cancel(context.getArgs(),tran,call);
+                        rollback.cancel(context,tran,call);
                     }
 
                     message.confirmCall(tran, call,context);

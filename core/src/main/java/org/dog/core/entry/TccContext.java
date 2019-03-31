@@ -1,11 +1,19 @@
 package org.dog.core.entry;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class TccContext implements Serializable {
+
+    private Map<Object,Object> context = new HashMap<>();
+
+    public Map<Object, Object> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<Object, Object> context) {
+        this.context = context;
+    }
 
     private Set<TccLock> lockList = new HashSet<>();
 

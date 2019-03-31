@@ -1,54 +1,17 @@
 package org.dog.test.server1.service;
+import org.dog.test.server1.ReturnOrder;
 import org.dog.test.server1.client.Server2Client;
 import org.dog.core.annotation.DogTccAnnotation;
 import org.dog.test.server1.client.Server3Client;
 import org.dog.test.server1.client.TranD;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 
 @Component
 public class TransServer {
 
-    @Autowired
-    Server2Client client2;
-
-    @Autowired
-    Server3Client client3;
-
-
-    public  String chainTccNoTran()throws Exception{
-        client2.tran(new TranD("abc","efg"));
-//        client3.tran(new TranD("hig","lmn"));
-        return  "OK";
-    }
-
-
-    @DogTccAnnotation(Name = "chainTcc")
-    public  String chainTcc()throws Exception{
-        client2.tran(new TranD("abc","efg"));
- //      client3.tran(new TranD("hig","lmn"));
-        return  "OK";
-    }
-
-
-
-    @DogTccAnnotation(Name = "singleTcc")
-    public  String singleTcc()throws Exception{
-
-        client3.tran(new TranD("abc","efg"));
-
-        return  "OK";
-
-   }
-
-
-    public  String noTcc()throws Exception{
-
-        client2.tran(new TranD("abc","efg"));
-
-        return  "OK";
-
-    }
 
 }

@@ -6,9 +6,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.dog.core.annotation.DogTccAnnotation;
 import org.dog.core.util.ThreadManager;
+import org.dog.test.server1.client.Server2Client;
+import org.dog.test.server1.client.Server3Client;
+import org.dog.test.server1.client.TranD;
 import org.dog.test.server1.service.TransServer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,241 +24,27 @@ public class Server1ApplicationController {
     private final AtomicLong counter = new AtomicLong();
 
     @Autowired
-    TransServer server;
+    Server2Client client2;
+
+    @Autowired
+    Server3Client client3;
 
 
-    @RequestMapping("/hello")
-    public String hello() throws Exception {
-        return  "hello/server1";
+    @RequestMapping("/chain/{id}/{other}")
+    @DogTccAnnotation(Name = "chain")
+    public String chain(@PathVariable String id, @PathVariable String other) throws Exception {
+
+        ReturnOrder trade = new ReturnOrder(id,other);
+
+        client2.tran(new TranD(id,other));
+
+       String result =  client3.returnOrder(trade);
+
+
+        return  result;
+
     }
 
-
-    @RequestMapping("/chainTcc")
-    public String tran() throws Exception {
-        return  server.chainTcc();
-    }
-
-
-    @RequestMapping("/noTcc5000")
-    public String noTcc5000() throws Exception{
-
-
-        long startTime = System.currentTimeMillis();
-
-        for(int i=0;i<5000;i++){
-
-            server.noTcc();
-        }
-
-        long endTime = System.currentTimeMillis();
-
-        String ret = "未在事务里，5000次调用需要的时间：" + (endTime - startTime) + "ms";
-
-        return  ret;
-    }
-
-
-    @RequestMapping("/singleTcc5000")
-    public String singleTcc5000() throws Exception{
-
-
-        long startTime = System.currentTimeMillis();
-
-        for(int i=0;i<5000;i++){
-
-            /*需要将线程中的事务信息清除，否则会自动把这些事务合并为一个事务*/
-            ThreadManager.clearTransaction();
-
-            server.singleTcc();
-
-        }
-
-        long endTime = System.currentTimeMillis();
-
-        //在事务里，100次调用需要的时间
-        String ret = "在事务里，5000次调用需要的时间：" + (endTime - startTime) + "ms";
-
-        return  ret;
-    }
-
-
-
-    @RequestMapping("/chainTcc5000thread")
-    public String chainTcc5000thread() throws Exception{
-
-        ExecutorService service = Executors.newFixedThreadPool(10);
-
-        long startTime = System.currentTimeMillis();
-
-
-        final CountDownLatch examBegin = new CountDownLatch(10);
-
-        for(int i=0;i<10;i++){
-
-            service.execute(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    for(int j=0;j < 500;j++) {
-
-                                        try {
-                                            ThreadManager.clearTransaction();
-                                            server.chainTcc();;
-                                        } catch (Exception e) {
-
-                                        }
-                                    }
-
-                                    examBegin.countDown();
-                                }
-                            }
-
-            );
-        }
-
-
-        examBegin.await();
-        long endTime = System.currentTimeMillis();
-
-        //在事务里，100次调用需要的时间
-        String ret = "10个线程各500次调用TCC链式事务，调用需要的时间：" + (endTime - startTime) + "ms";
-
-        return  ret;
-    }
-
-
-    @RequestMapping("/chainNoTcc5000thread")
-    public String chainNoTcc5000thread() throws Exception{
-
-        ExecutorService service = Executors.newFixedThreadPool(10);
-
-        long startTime = System.currentTimeMillis();
-
-
-        final CountDownLatch examBegin = new CountDownLatch(10);
-
-        for(int i=0;i<10;i++){
-
-            service.execute(new Runnable() {
-                                @Override
-                                public void run() {
-
-
-                                    for(int j=0;j < 500;j++) {
-
-                                        try {
-
-                                            server.chainTccNoTran();
-
-                                        } catch (Exception e) {
-
-                                        }
-                                    }
-
-                                    examBegin.countDown();
-                                }
-                            }
-
-            );
-        }
-
-
-        examBegin.await();
-        long endTime = System.currentTimeMillis();
-
-        //在事务里，100次调用需要的时间
-        String ret = "10个线程各500次调用链式非TCC事务，调用需要的时间：" + (endTime - startTime) + "ms";
-
-        return  ret;
-    }
-
-
-    @RequestMapping("/singleTcc5000thread")
-    public String singleTcc5000thread() throws Exception{
-
-        ExecutorService service = Executors.newFixedThreadPool(10);
-
-        long startTime = System.currentTimeMillis();
-
-
-        final CountDownLatch examBegin = new CountDownLatch(10);
-
-        for(int i=0;i<10;i++){
-
-            service.execute(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    for(int j=0;j < 500;j++) {
-                                        try {
-                                            ThreadManager.clearTransaction();
-                                            server.singleTcc();
-
-                                        } catch (Exception e) {
-
-                                        }
-
-                                    }
-                                    examBegin.countDown();
-                                }
-                            }
-
-            );
-        }
-
-
-        examBegin.await();
-        long endTime = System.currentTimeMillis();
-
-        //在事务里，100次调用需要的时间
-        String ret = "10个线程各500次调用非链式TCC事务，调用需要的时间：" + (endTime - startTime) + "ms";
-
-        return  ret;
-    }
-
-
-    @RequestMapping("/singleNoTcc5000thread")
-    public String singleNoTcc5000thread() throws Exception{
-
-        ExecutorService service = Executors.newFixedThreadPool(10);
-
-        long startTime = System.currentTimeMillis();
-
-
-        final CountDownLatch examBegin = new CountDownLatch(10);
-
-        for(int i=0;i<10;i++){
-
-            service.execute(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    for(int j=0;j < 500;j++) {
-                                        try {
-
-                                            server.noTcc();
-
-                                        } catch (Exception e) {
-
-                                        }
-                                    }
-
-                                    examBegin.countDown();
-                                }
-                            }
-
-            );
-        }
-
-
-        examBegin.await();
-        long endTime = System.currentTimeMillis();
-
-        //在事务里，100次调用需要的时间
-        String ret = "10个线程各500次调用非链式非TCC事务，调用需要的时间：" + (endTime - startTime) + "ms";
-
-        return  ret;
-    }
 
 
 }

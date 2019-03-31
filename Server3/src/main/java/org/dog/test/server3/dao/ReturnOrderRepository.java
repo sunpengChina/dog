@@ -1,12 +1,10 @@
-//package org.dog.test.server3.dao;
-//
-//import org.springframework.data.mongodb.repository.MongoRepository;
-//
-//public interface ReturnOrderRepository extends MongoRepository<ReturnOrder, String> {
-//
-//
-//     @Deprecated
-//     ReturnOrder insert(ReturnOrder var1);
-//
-//
-//}
+package org.dog.test.server3.dao;
+
+import org.dog.database.spring.mongo.DogMongoRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
+//import org.springframework.data.repository.CrudRepository;
+
+public interface ReturnOrderRepository extends DogMongoRepository<ReturnOrder, String> {
+
+
+}

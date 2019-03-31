@@ -12,6 +12,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.dog.core.util.IBytePackConvert;
+import org.dog.core.util.ThreadManager;
 import org.dog.message.zookeeper.util.ZkHelp;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -139,8 +140,11 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public synchronized void lock(DogTcc transaction, DogCall call, Set<TccLock> locks,TccContext oldContext )throws ConnectException,InterruptedException ,NonexistException {
+    public synchronized Set<TccLock> lock(DogTcc transaction, DogCall call, Set<TccLock> locks)throws ConnectException,InterruptedException ,NonexistException {
 
+        Set<TccLock> newlocks = new HashSet<>();
+
+        TccContext oldContext = ThreadManager.getTccContext();
 
         List<Op> ops = new ArrayList<Op>();
 
@@ -165,6 +169,8 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
             if(bytelock == null){
 
                 oldContext.getLockList().add(lock);
+
+                newlocks.add(lock);
 
                 ops.add(Op.create(pathHelper.lockerPath(lock.getKey()),transaction.getUnique().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
@@ -197,6 +203,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         }
 
+        return  newlocks;
     }
 
     @Override
