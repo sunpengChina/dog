@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -23,7 +24,13 @@ public class MongoServer extends DbTccHandler {
     @DogCallAnnotation(Name = "insertMongo", TccHandlerClass = MongoServer.class)
     public String insertReturnOrder(ReturnOrder returnOrder){
 
-        returnOrderRepository.save(returnOrder);
+        List<ReturnOrder> orders = new ArrayList<>();
+
+        orders.add(returnOrder);
+
+        returnOrderRepository.deleteAll(orders);
+
+        //returnOrderRepository.save(returnOrder);
 
         System.out.println("insertMongo");
 

@@ -21,7 +21,6 @@ class AopHelper {
 
     private ProceedingJoinPoint pjp;
 
-
     public AopHelper(ProceedingJoinPoint pjp, DogDb db) {
 
         this.db = db;
@@ -30,36 +29,286 @@ class AopHelper {
 
     }
 
+
+    private List<Object> getDogTableQueryArgObjects(Object object) throws IllegalArgumentException, IllegalAccessException {
+
+        List<Object> argObjs = new ArrayList<>();
+
+        if (object.getClass().getAnnotation(DogTable.class) != null) {
+
+            for (Field field : object.getClass().getDeclaredFields()) {
+                QueryArg queryarg = field.getAnnotation(QueryArg.class);
+                if (queryarg != null) {
+                    field.setAccessible(true);
+                    argObjs.add(field.get(object));
+                }
+            }
+        }
+        return argObjs;
+    }
+
+
+    private List<List<Object>> getIterableDogTableQueryArgObjects(Object object) throws IllegalArgumentException, IllegalAccessException {
+
+        List<List<Object>> argObjs = new ArrayList<>();
+
+        if (Iterable.class.isAssignableFrom(object.getClass())) {
+
+            Iterator iterator = ((Iterable) object).iterator();
+
+            if (iterator.hasNext()) {
+
+                argObjs.add(getDogTableQueryArgObjects(iterator.next()));
+
+            }
+        }
+
+        return argObjs;
+    }
+
+
+    private List<Object> getQueryArgInParamter(Object[] rawArgs) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+
+        List<Object> argObjs = new ArrayList<>();
+
+        Annotation[][] annotations = getMethodArgAnnotations(pjp);
+
+        for (int i = 0; i < rawArgs.length; i++) {
+
+            for (Annotation annotation : annotations[i]) {
+
+                if (annotation instanceof QueryArg) {
+
+                    argObjs.add(rawArgs[i]);
+
+                    break;
+                }
+            }
+
+        }
+
+
+        return argObjs;
+    }
+
+    private Method getMethodWithArgSize(int argSize, List<Method> candidate) {
+
+        for (Method method : candidate) {
+
+            if (method.getParameterTypes().length == argSize) {
+
+                return method;
+            }
+        }
+
+        return null;
+    }
+
+    private  boolean allArgIsIterable(Class<?>[] clazzs){
+
+        for(Class<?> clazz : clazzs){
+
+            if(!Iterable.class.isAssignableFrom(clazz)){
+
+                return  false;
+
+            }
+        }
+        return  true;
+    }
+
+    private  boolean allArgNotIterable(Class<?>[] clazzs){
+
+        for(Class<?> clazz : clazzs){
+
+            if(Iterable.class.isAssignableFrom(clazz)){
+
+                return  false;
+
+            }
+        }
+        return  true;
+    }
+
+
+    /**
+     * boolean 表示是否需要method迭代
+     * @return
+     * @throws NoSuchFieldException
+     * @throws NoSuchMethodException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
+    public Pair<Boolean,Pair<Method, Object[]>> getQueryMethodNewVersion() throws NoSuchFieldException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
+
+        List<Method> candidateQueryMethods = getCandidateQueryMethods();
+
+        List<Object> rawArgs = getQueryArgs();
+
+        /**
+         * 无参情况
+         */
+        if (rawArgs.size() == 0) {
+
+            Method method = getMethodWithArgSize(0, candidateQueryMethods);
+
+            if (method != null) {
+
+                return new Pair<>(false,new Pair<>(method, new Object[]{}));
+
+            } else {
+
+                throw new NoSuchMethodException();
+            }
+
+        }
+
+
+        /**
+         * 直接通过ArgInParamter传递
+         */
+        List<Object> queryArgInParamter = getQueryArgInParamter(rawArgs.toArray());
+
+        if (queryArgInParamter.size() != 0) {
+
+            Method method = getMethodWithArgSize(queryArgInParamter.size(), candidateQueryMethods);
+
+            if (method != null) {
+
+                return new  Pair<>(false,new Pair<>(method, queryArgInParamter.toArray()));
+
+            } else {
+
+                throw new NoSuchMethodException();
+            }
+
+        }
+
+
+        /**
+         * 获取 DogTable 中的参数
+         */
+        List<Object> queryArgsInDogTable = getDogTableQueryArgObjects(rawArgs.get(0));
+
+        if (queryArgsInDogTable.size() != 0) {
+
+            Method method = getMethodWithArgSize(queryArgsInDogTable.size(), candidateQueryMethods);
+
+            if (method != null) {
+
+                return new  Pair<>(false,new Pair<>(method, queryArgsInDogTable.toArray()));
+
+            } else {
+
+                throw new NoSuchMethodException();
+            }
+
+        }
+
+        /**
+         * 直接通过 Iterator 中的参数传递
+         */
+        List<List<Object>> iterableObjects = getIterableDogTableQueryArgObjects(rawArgs.get(0));
+
+        if (iterableObjects.size() == 0) {
+
+            throw new NoSuchMethodException();
+
+        } else {
+
+            /**
+             * queryArg 个数
+             */
+            int argNum = iterableObjects.get(0).size();
+
+            if (argNum == 0) {
+
+                throw new NoSuchMethodException();
+
+            } else {
+
+                /**
+                 * 找到个数相同的method
+                 */
+                Method method =  getMethodWithArgSize(argNum, candidateQueryMethods);
+
+                if(method == null){
+
+                    throw new NoSuchMethodException();
+
+                }else {
+
+                    Class<?>[] clazzs =   method.getParameterTypes();
+
+                    if(allArgIsIterable(clazzs)){
+
+                        List<List<Object>> ret = new ArrayList<>();
+
+                        for(int i=0;i<argNum;i++){
+
+                            ret.add(new ArrayList<Object>());
+                        }
+
+                        for(int j=0;j<iterableObjects.size();j++){
+
+                            for(int i=0;i<argNum;i++){
+
+                                ret.get(i).add(iterableObjects.get(j).get(i));
+
+                            }
+                        }
+
+                        return new Pair<>(false,new  Pair<>(method, ret.toArray()));
+                    }
+
+
+                    if(allArgNotIterable(clazzs)){
+
+                        return new Pair<>(true,new  Pair<>(method, iterableObjects.toArray()));
+                    }
+                }
+            }
+
+        }
+
+
+        throw new NoSuchMethodException();
+    }
+
+
+
+
+
     public Pair<Method, Object[]> getQueryMethod() throws NoSuchFieldException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
 
         List<Method> methods = getCandidateQueryMethods();
 
-        List<Object> args = getQueryArgs();
+        List<Object> rawArgs = getQueryArgs();
 
         List<Object> dogTableArgs = new ArrayList<>();
 
         /**
          * 无参
          */
-        if (args.size() == 0) {
+        if (rawArgs.size() == 0) {
 
             for (Method method : methods) {
 
                 if (method.getParameterTypes().length == 0) {
 
-                    return new Pair<>(method, null);
+                    return new Pair<>(method, new Object[]{});
                 }
             }
 
             throw new NoSuchMethodException();
         }
 
-        if (args.size() == 1) {
+        if (rawArgs.size() == 1) {
 
             /**
              * iterator 参数
              */
-            if (Iterable.class.isAssignableFrom(args.get(0).getClass())) {
+            if (Iterable.class.isAssignableFrom(rawArgs.get(0).getClass())) {
 
                 for (Method method : methods) {
 
@@ -67,7 +316,7 @@ class AopHelper {
 
                         if (Iterable.class.isAssignableFrom(method.getParameterTypes()[0].getClass())) {
 
-                            return new Pair<>(method, new Object[]{args.get(0)});
+                            return new Pair<>(method, new Object[]{rawArgs.get(0)});
 
                         }
                     }
@@ -79,11 +328,11 @@ class AopHelper {
             }
 
             /**
-             * 参数为DogTable
+             * 参数为DogTable,把其中的参数取出来
              */
-            if (args.get(0).getClass().getAnnotation(DogTable.class) != null) {
+            if (rawArgs.get(0).getClass().getAnnotation(DogTable.class) != null) {
 
-                for (Field field : args.get(0).getClass().getDeclaredFields()) {
+                for (Field field : rawArgs.get(0).getClass().getDeclaredFields()) {
 
                     QueryArg queryarg = field.getAnnotation(QueryArg.class);
 
@@ -91,7 +340,7 @@ class AopHelper {
 
                         field.setAccessible(true);
 
-                        dogTableArgs.add(field.get(args.get(0)));
+                        dogTableArgs.add(field.get(rawArgs.get(0)));
 
                     }
                 }
@@ -102,11 +351,11 @@ class AopHelper {
 
         for (Method method : methods) {
 
-            if (method.getParameterTypes().length == args.size()) {
+            if (method.getParameterTypes().length == rawArgs.size()) {
 
-                if (args.get(0).getClass().getAnnotation(DogTable.class) == null && !Iterable.class.isAssignableFrom(method.getParameterTypes()[0].getClass())) {
+                if (rawArgs.get(0).getClass().getAnnotation(DogTable.class) == null && !Iterable.class.isAssignableFrom(method.getParameterTypes()[0].getClass())) {
 
-                    return new Pair<>(method, args.toArray());
+                    return new Pair<>(method, rawArgs.toArray());
 
                 }
 
@@ -122,9 +371,10 @@ class AopHelper {
         throw new NoSuchMethodException();
     }
 
+
     public Map<TccLock, Object> getLocks(Object object) throws IllegalAccessException {
 
-        Map<TccLock, Object>  result = new HashMap<>();
+        Map<TccLock, Object> result = new HashMap<>();
 
         if (object == null) {
 

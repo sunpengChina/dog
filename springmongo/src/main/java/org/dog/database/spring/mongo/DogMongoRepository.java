@@ -7,6 +7,16 @@ import java.util.List;
 
 public interface DogMongoRepository <T, ID> extends MongoRepository<T, ID> {
 
+
+    @Override
+    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
+    <S extends T> S save(S s);
+
+    @Override
+    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findAllById",saveMethodName = "save")
+    void deleteAll(Iterable<? extends T> iterable);
+
+
     @Override
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
     <S extends T> List<S> saveAll(Iterable<S> iterable);
@@ -19,9 +29,6 @@ public interface DogMongoRepository <T, ID> extends MongoRepository<T, ID> {
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
     <S extends T> List<S> insert(Iterable<S> iterable);
 
-    @Override
-    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
-    <S extends T> S save(S s);
 
     @Override
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
@@ -30,10 +37,6 @@ public interface DogMongoRepository <T, ID> extends MongoRepository<T, ID> {
     @Override
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
     void delete(T t);
-
-    @Override
-    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
-    void deleteAll(Iterable<? extends T> iterable);
 
     @Override
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findAll",saveMethodName = "save",type = OperationType.DELETEALL)

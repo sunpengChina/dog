@@ -47,31 +47,61 @@ public class DogDbAop {
             /**
              * 在事务中的更新
              */
-            if (ThreadManager.exsit()&&db.type().equals(OperationType.UPDATEDATA)) {
+            if (ThreadManager.exsit() && db.type().equals(OperationType.UPDATEDATA)) {
 
-                Pair<Method, Object[]> query = aopHelper.getQueryMethod();
+                boolean multicall = aopHelper.getQueryMethodNewVersion().getKey();
+
+                Map<TccLock, Object> locks = new HashMap<>();
+
+                Pair<Method, Object[]> query = aopHelper.getQueryMethodNewVersion().getValue();
 
                 Object queryObj = ApplicationUtil.getApplicationContext().getBean(db.queryClass());
 
                 Object queryData = query.getKey().invoke(queryObj, query.getValue());
 
-                Map<TccLock, Object> locks = new HashMap<>();
+                if (!multicall) {
 
-                if (java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
+                    if (java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
 
-                    if(((Optional) queryData).isPresent()){
+                        if (((Optional) queryData).isPresent()) {
 
-                        locks = aopHelper.getLocks(((java.util.Optional) queryData).get());
+                            locks.putAll(aopHelper.getLocks(((java.util.Optional) queryData).get()));
 
+                        }
+
+                    } else {
+
+                        if (queryData != null) {
+
+                            locks.putAll(aopHelper.getLocks(queryData));
+                        }
                     }
 
                 } else {
 
-                    if(queryData!=null){
+                    Object[] subDatas = (Object[]) queryData;
 
-                        locks = aopHelper.getLocks(queryData);
+                    for (Object subData : subDatas) {
+
+                        if (java.util.Optional.class.isAssignableFrom(subData.getClass())) {
+
+                            if (((Optional) subData).isPresent()) {
+
+                                locks.putAll(aopHelper.getLocks(((java.util.Optional) subData).get()));
+
+                            }
+
+                        } else {
+
+                            if (subData != null) {
+
+                                locks.putAll(aopHelper.getLocks(subData));
+                            }
+                        }
+
                     }
                 }
+
 
                 Set<TccLock> tobufferlocks = iTccServer.lock(locks.keySet());
 
@@ -82,18 +112,18 @@ public class DogDbAop {
 
                 Map<Object, Object> context = ThreadManager.getTccContext().getContext();
 
-                SaveClazzInfo clazzInfo = new SaveClazzInfo(db.queryClass(),db.saveMethodName());
+                SaveClazzInfo clazzInfo = new SaveClazzInfo(db.queryClass(), db.saveMethodName());
 
-                if(context.containsKey(clazzInfo)){
+                if (context.containsKey(clazzInfo)) {
 
-                    Set<TccLock> values = (Set<TccLock>)context.get(clazzInfo);
+                    Set<TccLock> values = (Set<TccLock>) context.get(clazzInfo);
 
                     values.addAll(tobufferlocks);
 
 
-                }else{
+                } else {
 
-                    context.put(clazzInfo,tobufferlocks);
+                    context.put(clazzInfo, tobufferlocks);
                 }
 
             }
@@ -101,9 +131,9 @@ public class DogDbAop {
             /**
              * 在事务中的插入
              */
-            if (ThreadManager.exsit()&&db.type().equals(OperationType.INSERTNEWDATA)) {
+            if (ThreadManager.exsit() && db.type().equals(OperationType.INSERTNEWDATA)) {
 
-                Object  insertData = pjp.getArgs()[0];
+                Object insertData = pjp.getArgs()[0];
 
                 Map<TccLock, Object> locks = new HashMap<>();
 
