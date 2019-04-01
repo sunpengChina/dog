@@ -9,7 +9,6 @@ import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.TccContext;
 import org.dog.core.entry.TccLock;
-import org.dog.core.tccserver.TccServer;
 import org.dog.database.core.buffer.IDataBuffer;
 
 import java.lang.reflect.Method;
@@ -33,18 +32,17 @@ public class DbTccHandler extends TccHandler {
     }
 
 
-    private Method getMethod(SaveClazzInfo clazzInfo) throws NoSuchMethodException {
+    private Method getMethod(Class<?> clazz,String methodName) throws NoSuchMethodException {
 
-        for (Method method : clazzInfo.getClazz().getMethods()) {
+        for (Method method : clazz.getMethods()) {
 
-            if (method.getName().equals(clazzInfo.getSaveMethod()) && method.getParameters().length == 1) {
+            if (method.getName().equals(methodName) && method.getParameters().length == 1) {
 
                 return method;
 
             }
         }
-
-        throw new NoSuchMethodException(clazzInfo.getSaveMethod());
+        throw new NoSuchMethodException(methodName);
     }
 
 
@@ -59,25 +57,54 @@ public class DbTccHandler extends TccHandler {
 
             for (Map.Entry<Object, Object> values : locks.entrySet()) {
 
-                SaveClazzInfo saveClazzInfo = (SaveClazzInfo) values.getKey();
+                ClazzInfo clazzInfo = (ClazzInfo) values.getKey();
 
-                Object queryBean = ApplicationUtil.getApplicationContext().getBean(saveClazzInfo.getClazz());
+                Object queryBean = ApplicationUtil.getApplicationContext().getBean(clazzInfo.getClazz());
 
                 Set<TccLock> tccLocks = (Set<TccLock>) values.getValue();
 
-                Method method = getMethod(saveClazzInfo);
+                /**
+                 *  修改型事务的回滚
+                 */
+                if (!clazzInfo.getSaveMethod().equals("")) {
+
+                    Method method = getMethod(clazzInfo.getClazz(),clazzInfo.getSaveMethod());
+
+                    /**
+                     * 必然有缓存的锁
+                     */
+                    for (TccLock e : tccLocks) {
+
+                        Object bufferedData = dataBuffer.getData(e);
+
+                        method.invoke(queryBean, bufferedData);
+
+                        dataBuffer.clearData(e);
+                    }
+
+                }
 
                 /**
-                 * 必然有缓存的锁
+                 *  回滚插入型事务
                  */
-                for (TccLock e : tccLocks) {
+                if (!clazzInfo.getDeleteMethod().equals("")) {
 
-                    Object bufferedData = dataBuffer.getData(e);
+                    Method method = getMethod(clazzInfo.getClazz(),clazzInfo.getDeleteMethod());
 
-                    method.invoke(queryBean,bufferedData);
 
-                    dataBuffer.clearData(e);
+                    for (TccLock e : tccLocks) {
+
+                        Object bufferedData = dataBuffer.getData(e);
+
+                        method.invoke(queryBean, bufferedData);
+
+                        dataBuffer.clearData(e);
+                    }
+
+
                 }
+
+
             }
 
 
@@ -97,7 +124,7 @@ public class DbTccHandler extends TccHandler {
 
         super.confirm(context, tcc, call);
 
-        for(TccLock lock : context.getLockList()){
+        for (TccLock lock : context.getLockList()) {
 
             /**
              * 有可能有锁无缓存

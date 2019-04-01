@@ -16,14 +16,15 @@ public interface DogMongoRepository <T, ID> extends MongoRepository<T, ID> {
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findAllById",saveMethodName = "save")
     void deleteAll(Iterable<? extends T> iterable);
 
+    @Override
+    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
+    <S extends T> S insert(S s);
+
 
     @Override
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
     <S extends T> List<S> saveAll(Iterable<S> iterable);
 
-    @Override
-    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")
-    <S extends T> S insert(S s);
 
     @Override
     @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findById",saveMethodName = "save")

@@ -5,6 +5,7 @@ import org.dog.core.entry.TccLock;
 import org.dog.core.util.Pair;
 import org.dog.database.core.annotation.DogDb;
 import org.dog.database.core.annotation.DogTable;
+import org.dog.database.core.annotation.MatchType;
 import org.dog.database.core.annotation.QueryArg;
 import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
@@ -17,13 +18,13 @@ import java.util.*;
 class AopHelper {
 
 
-    private DogDb db;
+    private DogDb dogDb;
 
     private ProceedingJoinPoint pjp;
 
     public AopHelper(ProceedingJoinPoint pjp, DogDb db) {
 
-        this.db = db;
+        this.dogDb = db;
 
         this.pjp = pjp;
 
@@ -47,7 +48,6 @@ class AopHelper {
         return argObjs;
     }
 
-
     private List<List<Object>> getIterableDogTableQueryArgObjects(Object object) throws IllegalArgumentException, IllegalAccessException {
 
         List<List<Object>> argObjs = new ArrayList<>();
@@ -65,7 +65,6 @@ class AopHelper {
 
         return argObjs;
     }
-
 
     private List<Object> getQueryArgInParamter(Object[] rawArgs) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
@@ -131,17 +130,9 @@ class AopHelper {
     }
 
 
-    /**
-     * boolean 表示是否需要method迭代
-     * @return
-     * @throws NoSuchFieldException
-     * @throws NoSuchMethodException
-     * @throws IllegalArgumentException
-     * @throws IllegalAccessException
-     */
-    public Pair<Boolean,Pair<Method, Object[]>> getQueryMethodNewVersion() throws NoSuchFieldException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
+    public Pair<MatchType,Pair<Method, Object[]>> getMethodAndArgObjects(String methodName) throws NoSuchFieldException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
 
-        List<Method> candidateQueryMethods = getCandidateQueryMethods();
+        List<Method> candidateQueryMethods = getCandidateMethods(methodName);
 
         List<Object> rawArgs = getQueryArgs();
 
@@ -154,7 +145,7 @@ class AopHelper {
 
             if (method != null) {
 
-                return new Pair<>(false,new Pair<>(method, new Object[]{}));
+                return new Pair<>(MatchType.NoArg,new Pair<>(method, new Object[]{}));
 
             } else {
 
@@ -175,7 +166,7 @@ class AopHelper {
 
             if (method != null) {
 
-                return new  Pair<>(false,new Pair<>(method, queryArgInParamter.toArray()));
+                return new  Pair<>(MatchType.ArgInParamter,new Pair<>(method, queryArgInParamter.toArray()));
 
             } else {
 
@@ -196,7 +187,7 @@ class AopHelper {
 
             if (method != null) {
 
-                return new  Pair<>(false,new Pair<>(method, queryArgsInDogTable.toArray()));
+                return new  Pair<>(MatchType.ArgInDogTable,new Pair<>(method, queryArgsInDogTable.toArray()));
 
             } else {
 
@@ -258,13 +249,13 @@ class AopHelper {
                             }
                         }
 
-                        return new Pair<>(false,new  Pair<>(method, ret.toArray()));
+                        return new Pair<>(MatchType.Iterator,new  Pair<>(method, ret.toArray()));
                     }
 
 
                     if(allArgNotIterable(clazzs)){
 
-                        return new Pair<>(true,new  Pair<>(method, iterableObjects.toArray()));
+                        return new Pair<>(MatchType.IteratorMutiCall,new  Pair<>(method, iterableObjects.toArray()));
                     }
                 }
             }
@@ -277,62 +268,27 @@ class AopHelper {
 
 
 
+    public Map<TccLock,Object[]> getLocksInMutiIterator(Object objectArg)throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
+        Map<TccLock,Object[]>  ret = new HashMap<>();
 
-    public Pair<Method, Object[]> getQueryMethod() throws NoSuchFieldException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
+        String dbName = dogDb.dbName();
 
-        List<Method> methods = getCandidateQueryMethods();
+        String tableName = dogDb.tableName();
 
-        List<Object> rawArgs = getQueryArgs();
+        String idHeader = "";
 
-        List<Object> dogTableArgs = new ArrayList<>();
+        Iterator iterator = ((Iterable)objectArg).iterator();
 
-        /**
-         * 无参
-         */
-        if (rawArgs.size() == 0) {
+        List<Field> fieldList = new ArrayList<>();
 
-            for (Method method : methods) {
+        if(iterator.hasNext()){
 
-                if (method.getParameterTypes().length == 0) {
+            Object object = iterator.next();
 
-                    return new Pair<>(method, new Object[]{});
-                }
-            }
+            if (object.getClass().getAnnotation(DogTable.class) != null) {
 
-            throw new NoSuchMethodException();
-        }
-
-        if (rawArgs.size() == 1) {
-
-            /**
-             * iterator 参数
-             */
-            if (Iterable.class.isAssignableFrom(rawArgs.get(0).getClass())) {
-
-                for (Method method : methods) {
-
-                    if (method.getParameterTypes().length == 1) {
-
-                        if (Iterable.class.isAssignableFrom(method.getParameterTypes()[0].getClass())) {
-
-                            return new Pair<>(method, new Object[]{rawArgs.get(0)});
-
-                        }
-                    }
-
-                }
-
-                throw new NoSuchMethodException();
-
-            }
-
-            /**
-             * 参数为DogTable,把其中的参数取出来
-             */
-            if (rawArgs.get(0).getClass().getAnnotation(DogTable.class) != null) {
-
-                for (Field field : rawArgs.get(0).getClass().getDeclaredFields()) {
+                for (Field field : object.getClass().getDeclaredFields()) {
 
                     QueryArg queryarg = field.getAnnotation(QueryArg.class);
 
@@ -340,39 +296,195 @@ class AopHelper {
 
                         field.setAccessible(true);
 
-                        dogTableArgs.add(field.get(rawArgs.get(0)));
+                        fieldList.add(field);
+
+                        idHeader = idHeader + queryarg.argName();
 
                     }
                 }
-
             }
 
         }
 
-        for (Method method : methods) {
 
-            if (method.getParameterTypes().length == rawArgs.size()) {
+        iterator = ((Iterable)objectArg).iterator();
 
-                if (rawArgs.get(0).getClass().getAnnotation(DogTable.class) == null && !Iterable.class.isAssignableFrom(method.getParameterTypes()[0].getClass())) {
+        while (iterator.hasNext()){
 
-                    return new Pair<>(method, rawArgs.toArray());
+            Object ob = iterator.next();
+
+            List<Object> retObjects = new ArrayList<>();
+
+            String values = "";
+
+            for(int j =0;j<fieldList.size();j++){
+
+                values = values + fieldList.get(j).get(ob).toString();
+
+                retObjects.add(fieldList.get(j).get(ob));
+            }
+
+
+            TccLock newLock = new TccLock(dbName+tableName+idHeader+values);
+
+            ret.put(newLock,retObjects.toArray());
+        }
+
+        return  ret;
+    };
+
+
+
+    public Map<TccLock,Object[]> getLocksInIterator(Object objectArg)throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+
+        Map<TccLock,Object[]>  ret = new HashMap<>();
+
+        String dbName = dogDb.dbName();
+
+        String tableName = dogDb.tableName();
+
+        String idHeader = "";
+
+        Iterator iterator = ((Iterable)objectArg).iterator();
+
+        List<Field> fieldList = new ArrayList<>();
+
+        if(iterator.hasNext()){
+
+            Object object = iterator.next();
+
+            if (object.getClass().getAnnotation(DogTable.class) != null) {
+
+                for (Field field : object.getClass().getDeclaredFields()) {
+
+                    QueryArg queryarg = field.getAnnotation(QueryArg.class);
+
+                    if (queryarg != null) {
+
+                        field.setAccessible(true);
+
+                        fieldList.add(field);
+
+                        idHeader = idHeader + queryarg.argName();
+
+                    }
+                }
+            }
+
+        }
+
+        iterator = ((Iterable)objectArg).iterator();
+
+        while (iterator.hasNext()){
+
+            Object ob = iterator.next();
+
+            String values = "";
+
+            for (Field field : fieldList) {
+
+                values = values + field.get(ob);
+
+            }
+
+            TccLock newLock = new TccLock(dbName+tableName+idHeader+values);
+
+            ret.put(newLock,new Object[]{ob});
+        }
+
+        return  ret;
+    };
+
+
+
+
+    public Map<TccLock,Object[]> getLocksInDogTable(Object object)throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+
+        Map<TccLock,Object[]>  ret = new HashMap<>();
+
+        String dbName = dogDb.dbName();
+
+        String tableName = dogDb.tableName();
+
+        String idHeader = "";
+
+        String values = "";
+
+        List<Object> argObjs = new ArrayList<>();
+
+        if (object.getClass().getAnnotation(DogTable.class) != null) {
+
+            for (Field field : object.getClass().getDeclaredFields()) {
+
+                QueryArg queryarg = field.getAnnotation(QueryArg.class);
+
+                if (queryarg != null) {
+
+                    field.setAccessible(true);
+
+                    argObjs.add(field.get(object));
+
+                    idHeader = idHeader + queryarg.argName();
 
                 }
-
             }
+        }
 
-            if (method.getParameterTypes().length == dogTableArgs.size()) {
+        TccLock tccLock = new TccLock(dbName + tableName + idHeader + values);
 
-                return new Pair<>(method, dogTableArgs.toArray());
+        ret.put(tccLock,argObjs.toArray());
+
+        return  ret;
+    }
+
+    public Map<TccLock,Object[]> getLocksInParams()throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+
+        Map<TccLock,Object[]>  ret = new HashMap<>();
+
+        Annotation[][] annotations =  getMethodArgAnnotations(pjp);
+
+        Object[] rawArgs = pjp.getArgs();
+
+        if (rawArgs.length == 0) {
+
+            return ret;
+        }
+
+        List<Object> objects = new ArrayList<>();
+
+        String dbName = dogDb.dbName();
+
+        String tableName = dogDb.tableName();
+
+        String idHeader = "";
+
+        String values = "";
+
+        for (int i = 0; i < rawArgs.length; i++) {
+
+            for (Annotation annotation : annotations[i]) {
+
+                if (annotation instanceof QueryArg) {
+
+                    objects.add(rawArgs[i]);
+
+                    idHeader = idHeader + ((QueryArg)annotation).argName();
+
+                    values = values + rawArgs[i].toString();
+
+                }
             }
 
         }
 
-        throw new NoSuchMethodException();
+        TccLock tccLock = new TccLock(dbName + tableName + idHeader + values);
+
+        ret.put(tccLock,objects.toArray());
+
+        return  ret;
     }
 
-
-    public Map<TccLock, Object> getLocks(Object object) throws IllegalAccessException {
+    public Map<TccLock, Object> getLocksDogTableOrListOfDogTable(Object object) throws IllegalAccessException {
 
         Map<TccLock, Object> result = new HashMap<>();
 
@@ -479,14 +591,7 @@ class AopHelper {
         return result;
     }
 
-    /**
-     * @return
-     * @throws NoSuchFieldException
-     * @throws IllegalArgumentException
-     * @throws IllegalAccessException   //object  QueryArg  [多条]  ->   多条QueryArg
-     *                                  //object  DogTable [1条]
-     *                                  //object  iterator [1条]    ->   一条iterator
-     */
+
     public List<Object> getQueryArgs() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
         List<Object> result = new ArrayList<>();
@@ -535,31 +640,31 @@ class AopHelper {
     }
 
 
-    public List<Method> getCandidateQueryMethods() throws SecurityException {
+    public List<Method> getCandidateMethods(String methodName) throws SecurityException {
 
         List<Method> methods = new ArrayList<>();
 
-        Class<?> clazz = db.queryClass();
+        Class<?> clazz = dogDb.queryClass();
 
         for (Method method : clazz.getMethods()) {
 
-            if (method.getName().equals(db.queryMethodName())) {
+            if (method.getName().equals(methodName)) {
 
-                if (db.argClass().length == 0) {
+                if (dogDb.argClass().length == 0) {
 
                     methods.add(method);
 
                 } else {
 
-                    if (method.getParameterTypes().length == db.argClass().length) {
+                    if (method.getParameterTypes().length == dogDb.argClass().length) {
 
                         boolean hit = true;
 
-                        for (int i = 0; i < db.argClass().length; i++) {
+                        for (int i = 0; i < dogDb.argClass().length; i++) {
 
                             Class<?> methodarg = method.getParameterTypes()[i];
 
-                            Class<?> aimType = db.argClass()[i];
+                            Class<?> aimType = dogDb.argClass()[i];
 
                             if (!methodarg.equals(aimType)) {
 
@@ -588,7 +693,6 @@ class AopHelper {
         return methods;
     }
 
-
     private static Annotation[][] getMethodArgAnnotations(ProceedingJoinPoint pjp) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
         MethodInvocationProceedingJoinPoint methodJoinPoint = (MethodInvocationProceedingJoinPoint) pjp;
@@ -603,5 +707,6 @@ class AopHelper {
 
         return argAnnotations;
     }
+
 
 }

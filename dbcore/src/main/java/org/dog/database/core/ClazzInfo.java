@@ -1,9 +1,8 @@
 package org.dog.database.core;
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
 
-public class SaveClazzInfo implements Serializable {
+public class ClazzInfo implements Serializable {
 
     @Override
     public int hashCode() {
@@ -13,9 +12,9 @@ public class SaveClazzInfo implements Serializable {
     @Override
     public boolean equals(Object obj) {
 
-        if (obj instanceof SaveClazzInfo) {
+        if (obj instanceof ClazzInfo) {
 
-            SaveClazzInfo other= (SaveClazzInfo) obj;
+            ClazzInfo other= (ClazzInfo) obj;
 
             return clazz.equals(other.clazz)&& saveMethod.equals(other.saveMethod);
 
@@ -24,19 +23,29 @@ public class SaveClazzInfo implements Serializable {
         return false;
     }
 
-    public SaveClazzInfo() {
+    public ClazzInfo() {
 
     }
 
-
-    public SaveClazzInfo(Class<?> clazz, String saveMethod) {
+    public ClazzInfo(Class<?> clazz, String saveMethod,String deleteMethod) {
         this.clazz = clazz;
         this.saveMethod = saveMethod;
+        this.deleteMethod = deleteMethod;
     }
 
     private Class<?> clazz;
 
     private String saveMethod;
+
+    private String deleteMethod;
+
+    public String getDeleteMethod() {
+        return deleteMethod;
+    }
+
+    public void setDeleteMethod(String deleteMethod) {
+        this.deleteMethod = deleteMethod;
+    }
 
     public Class<?> getClazz() {
         return clazz;

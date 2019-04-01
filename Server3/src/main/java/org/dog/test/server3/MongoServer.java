@@ -28,9 +28,12 @@ public class MongoServer extends DbTccHandler {
 
         orders.add(returnOrder);
 
-        returnOrderRepository.deleteAll(orders);
+        returnOrderRepository.insert(returnOrder);
 
-        //returnOrderRepository.save(returnOrder);
+        //returnOrderRepository.deleteAll(orders);
+
+        int i = 10/0;
+
 
         System.out.println("insertMongo");
 
