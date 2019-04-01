@@ -53,9 +53,9 @@ public class DogDbAop {
 
                 Object queryObj = ApplicationUtil.getApplicationContext().getBean(db.queryClass());
 
-                Object queryData = query.getKey().invoke(queryObj, query.getValue());
-
                 if (!multicall) {
+
+                    Object queryData = query.getKey().invoke(queryObj, query.getValue());
 
                     if (java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
 
@@ -75,27 +75,30 @@ public class DogDbAop {
 
                 } else {
 
-                    Object[] subDatas = (Object[]) queryData;
+                    Object[] subArgDatas = (Object[]) query.getValue();
 
-                    for (Object subData : subDatas) {
+                    for(Object oneArg:subArgDatas){
 
-                        if (java.util.Optional.class.isAssignableFrom(subData.getClass())) {
+                        Object queryData = query.getKey().invoke(queryObj,((List)oneArg).toArray());
 
-                            if (((Optional) subData).isPresent()) {
+                        if (java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
 
-                                locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(((java.util.Optional) subData).get()));
+                            if (((Optional) queryData).isPresent()) {
+
+                                locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(((java.util.Optional) queryData).get()));
 
                             }
 
                         } else {
 
-                            if (subData != null) {
+                            if (queryData != null) {
 
-                                locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(subData));
+                                locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(queryData));
                             }
                         }
 
                     }
+
                 }
 
 

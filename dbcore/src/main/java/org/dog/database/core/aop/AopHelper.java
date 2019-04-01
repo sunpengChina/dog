@@ -56,7 +56,7 @@ class AopHelper {
 
             Iterator iterator = ((Iterable) object).iterator();
 
-            if (iterator.hasNext()) {
+            while (iterator.hasNext()) {
 
                 argObjs.add(getDogTableQueryArgObjects(iterator.next()));
 
@@ -197,7 +197,7 @@ class AopHelper {
         }
 
         /**
-         * 直接通过 Iterator 中的参数传递
+         * 直接通过 Iterator 中的参数传递  -> 只支持一个Iterator参数
          */
         List<List<Object>> iterableObjects = getIterableDogTableQueryArgObjects(rawArgs.get(0));
 
@@ -426,6 +426,7 @@ class AopHelper {
 
                     idHeader = idHeader + queryarg.argName();
 
+                    values = values + field.get(object).toString();
                 }
             }
         }

@@ -96,7 +96,7 @@ public class DbTccHandler extends TccHandler {
 
                         Object bufferedData = dataBuffer.getData(e);
 
-                        method.invoke(queryBean, bufferedData);
+                        method.invoke(queryBean,(Object[])bufferedData);
 
                         dataBuffer.clearData(e);
                     }

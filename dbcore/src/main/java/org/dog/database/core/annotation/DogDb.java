@@ -12,7 +12,7 @@ public @interface DogDb {
     String tableName() default "";
     Class<?> queryClass() ;
     String queryMethodName() ;
-    String deleteMethodName();
+    String deleteMethodName() default "";
     Class<?>[] argClass() default {};
     String saveMethodName();
     OperationType type() default  OperationType.UPDATEDATA;
