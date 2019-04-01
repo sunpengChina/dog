@@ -10,6 +10,7 @@ import org.dog.core.util.Pair;
 import org.dog.core.util.ThreadManager;
 import org.dog.database.core.SaveClazzInfo;
 import org.dog.database.core.annotation.DogDb;
+import org.dog.database.core.annotation.OperationType;
 import org.dog.database.core.buffer.IDataBuffer;
 import org.dog.database.core.util.ReflectUtil;
 import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint;
@@ -39,15 +40,14 @@ public class DogDbAop {
 
         Object result = null;
 
+        AopHelper aopHelper = new AopHelper(pjp, db);
 
         try {
 
             /**
-             * 在事务中
+             * 在事务中的更新
              */
-            if (ThreadManager.exsit()) {
-
-                AopHelper aopHelper = new AopHelper(pjp, db);
+            if (ThreadManager.exsit()&&db.type().equals(OperationType.UPDATEDATA)) {
 
                 Pair<Method, Object[]> query = aopHelper.getQueryMethod();
 
@@ -59,11 +59,18 @@ public class DogDbAop {
 
                 if (java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
 
-                    locks = aopHelper.getLocks(((java.util.Optional) queryData).get());
+                    if(((Optional) queryData).isPresent()){
+
+                        locks = aopHelper.getLocks(((java.util.Optional) queryData).get());
+
+                    }
 
                 } else {
 
-                    locks = aopHelper.getLocks(queryData);
+                    if(queryData!=null){
+
+                        locks = aopHelper.getLocks(queryData);
+                    }
                 }
 
                 Set<TccLock> tobufferlocks = iTccServer.lock(locks.keySet());
@@ -91,6 +98,27 @@ public class DogDbAop {
 
             }
 
+            /**
+             * 在事务中的插入
+             */
+            if (ThreadManager.exsit()&&db.type().equals(OperationType.INSERTNEWDATA)) {
+
+                Object  insertData = pjp.getArgs()[0];
+
+                Map<TccLock, Object> locks = new HashMap<>();
+
+                if (java.util.Optional.class.isAssignableFrom(insertData.getClass())) {
+
+                    locks = aopHelper.getLocks(((java.util.Optional) insertData).get());
+
+                } else {
+
+                    locks = aopHelper.getLocks(insertData);
+                }
+
+                iTccServer.lock(locks.keySet());
+
+            }
 
             result = pjp.proceed();
 

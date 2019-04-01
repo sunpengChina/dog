@@ -67,6 +67,9 @@ public class DbTccHandler extends TccHandler {
 
                 Method method = getMethod(saveClazzInfo);
 
+                /**
+                 * 必然有缓存的锁
+                 */
                 for (TccLock e : tccLocks) {
 
                     Object bufferedData = dataBuffer.getData(e);
@@ -96,6 +99,9 @@ public class DbTccHandler extends TccHandler {
 
         for(TccLock lock : context.getLockList()){
 
+            /**
+             * 有可能有锁无缓存
+             */
             dataBuffer.clearData(lock);
 
         }

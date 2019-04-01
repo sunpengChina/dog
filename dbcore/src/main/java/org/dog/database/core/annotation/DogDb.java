@@ -12,4 +12,5 @@ public @interface DogDb {
     String queryMethodName() ;
     Class<?>[] argClass() default {};
     String saveMethodName();
+    OperationType type() default  OperationType.UPDATEDATA;
 }

@@ -1,5 +1,6 @@
 package org.dog.database.spring.mongo;
 import org.dog.database.core.annotation.DogDb;
+import org.dog.database.core.annotation.OperationType;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
@@ -35,6 +36,6 @@ public interface DogMongoRepository <T, ID> extends MongoRepository<T, ID> {
     void deleteAll(Iterable<? extends T> iterable);
 
     @Override
-    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findAll",saveMethodName = "save")
+    @DogDb(queryClass = DogMongoRepository.class, queryMethodName = "findAll",saveMethodName = "save",type = OperationType.DELETEALL)
     void deleteAll();
 }

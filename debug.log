@@ -1,0 +1,187 @@
+2019-04-01 09:49:38  [ main:0 ] - [ ERROR ]  org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /dog
+2019-04-01 09:49:38  [ main:10 ] - [ ERROR ]  org.dog.core.jms.exception.ConnectException
+2019-04-01 09:49:40  [ main:2231 ] - [ ERROR ]  org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /dog/server1
+2019-04-01 09:49:40  [ main:2232 ] - [ ERROR ]  org.dog.core.jms.exception.ConnectException
+2019-04-01 09:49:40  [ main:2316 ] - [ INFO ]  server1: started
+2019-04-01 09:49:51  [ main:0 ] - [ ERROR ]  org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /dog
+2019-04-01 09:49:51  [ main:4 ] - [ ERROR ]  org.dog.core.jms.exception.ConnectException
+2019-04-01 09:49:53  [ main:2304 ] - [ ERROR ]  org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /dog/server2
+2019-04-01 09:49:53  [ main:2304 ] - [ ERROR ]  org.dog.core.jms.exception.ConnectException
+2019-04-01 09:49:53  [ main:2307 ] - [ INFO ]  server2: started
+2019-04-01 09:50:01  [ main-EventThread:23458 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 09:50:01  [ main-EventThread:23481 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 09:50:02  [ main-EventThread:11160 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 09:50:02  [ main-EventThread:11295 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 09:50:08  [ main-EventThread:0 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 09:50:08  [ main-EventThread:38 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 09:50:08  [ main:92 ] - [ INFO ]  server3: started
+2019-04-01 09:50:40  [ pool-2-thread-1:62272 ] - [ INFO ]  tcc扫描：/dog/server1/chain
+2019-04-01 09:50:40  [ pool-2-thread-1:62405 ] - [ INFO ]  发送tcc 节点掉线事件：[DogTran:  application:server1    Name:chain   key:2116881305 statusCONFIRM]
+2019-04-01 09:50:40  [ pool-2-thread-1:62406 ] - [ INFO ]  TccNodeOfflineEvent[DogTran:  application:server1    Name:chain   key:2116881305 statusCONFIRM]
+2019-04-01 09:50:40  [ pool-2-thread-1:62412 ] - [ INFO ]  tcc扫描：/dog/server1/chainTcc
+2019-04-01 09:50:40  [ pool-2-thread-1:62419 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:50:53  [ pool-2-thread-1:62347 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:51:08  [ pool-8-thread-1:60213 ] - [ INFO ]  发送call 节点掉线事件：[DogTran:  application:server1    Name:chain   key:2116881305 statusUNKNOWN]
+2019-04-01 09:51:08  [ pool-8-thread-1:60221 ] - [ INFO ]  CallNodeOfflineEvent[DogTran:  application:server1    Name:chain   key:2116881305 statusUNKNOWN]
+2019-04-01 09:51:08  [ pool-8-thread-1:60230 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:51:08  [ pool-1-thread-1:60235 ] - [ INFO ]  confirm
+2019-04-01 09:51:08  [ pool-1-thread-1:60239 ] - [ INFO ]  unLock:dbnametestID110
+2019-04-01 09:51:08  [ pool-1-thread-1:60288 ] - [ ERROR ]  删除时，被其他节点托管！，将由其他节点删除！
+2019-04-01 09:51:08  [ pool-1-thread-1:60288 ] - [ ERROR ]  org.dog.core.jms.exception.ConnectException
+2019-04-01 09:51:08  [ pool-1-thread-1:60289 ] - [ ERROR ]  confirError[DogTran:  application:server1    Name:chain   key:2116881305 statusCONFIRM][LocalServer:    Name:insertMongo   key:server3   status:TRY]
+2019-04-01 09:52:40  [ pool-2-thread-1:182263 ] - [ INFO ]  tcc扫描：/dog/server1/chain
+2019-04-01 09:52:40  [ pool-2-thread-1:182336 ] - [ INFO ]  tcc扫描：/dog/server1/chainTcc
+2019-04-01 09:52:40  [ pool-2-thread-1:182354 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:52:53  [ pool-2-thread-1:182336 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:53:08  [ pool-8-thread-1:180231 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:54:40  [ pool-2-thread-1:302267 ] - [ INFO ]  tcc扫描：/dog/server1/chain
+2019-04-01 09:54:40  [ pool-2-thread-1:302349 ] - [ INFO ]  tcc扫描：/dog/server1/chainTcc
+2019-04-01 09:54:40  [ pool-2-thread-1:302365 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:54:53  [ pool-2-thread-1:302346 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:55:08  [ pool-8-thread-1:300174 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:56:40  [ pool-2-thread-1:422266 ] - [ INFO ]  tcc扫描：/dog/server1/chain
+2019-04-01 09:56:40  [ pool-2-thread-1:422351 ] - [ INFO ]  tcc扫描：/dog/server1/chainTcc
+2019-04-01 09:56:40  [ pool-2-thread-1:422368 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:56:53  [ pool-2-thread-1:422325 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:56:54  [ http-nio-8081-exec-2:436022 ] - [ INFO ]  非事务性调用
+2019-04-01 09:56:54  [ http-nio-8081-exec-2:436083 ] - [ INFO ]  非事务性调用
+2019-04-01 09:57:06  [ http-nio-8081-exec-4:448034 ] - [ INFO ]  非事务性调用
+2019-04-01 09:57:06  [ http-nio-8081-exec-4:448045 ] - [ INFO ]  非事务性调用
+2019-04-01 09:57:08  [ pool-8-thread-1:420202 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:57:35  [ http-nio-8081-exec-8:477372 ] - [ INFO ]  非事务性调用
+2019-04-01 09:57:35  [ http-nio-8081-exec-8:477404 ] - [ INFO ]  createTransaction:[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:35  [ http-nio-8081-exec-8:477496 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:395874258 statusTRY]Start OK
+2019-04-01 09:57:35  [ http-nio-8081-exec-8:477497 ] - [ INFO ]  TCC远程调用:[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:36  [ http-nio-8081-exec-8:477530 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:36  [ http-nio-8082-exec-1:465143 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:36  [ http-nio-8081-exec-8:477776 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:36  [ http-nio-8083-exec-1:447772 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:36  [ http-nio-8083-exec-1:447841 ] - [ INFO ]  本地事务调用：[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]: callname:insertMongo
+2019-04-01 09:57:36  [ http-nio-8083-exec-1:447908 ] - [ INFO ]  创建：/dog/server1/chain/395874258/NODES/server3
+2019-04-01 09:57:36  [ http-nio-8083-exec-1:447930 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:395874258 statusTRY] Start Call:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 09:57:36  [ http-nio-8083-exec-1:447932 ] - [ INFO ]  watch:[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:36  [ http-nio-8083-exec-1:447934 ] - [ INFO ]  prehandler
+2019-04-01 09:57:36  [ http-nio-8083-exec-1:448008 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:395874258 statusTRY] 设置数据:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 09:57:52  [ http-nio-8083-exec-1:463826 ] - [ ERROR ]  本地调用失败:java.util.NoSuchElementException: No value present
+2019-04-01 09:57:52  [ http-nio-8083-exec-1:463906 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:52  [ http-nio-8081-exec-8:494135 ] - [ INFO ]  TCC报错:[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:52  [ http-nio-8081-exec-8:494135 ] - [ ERROR ]  feign.FeignException: status 500 reading Server3Client#returnOrder(ReturnOrder)
+2019-04-01 09:57:52  [ http-nio-8081-exec-8:494203 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:395874258 statusTRY]: cancel
+2019-04-01 09:57:52  [ pool-1-thread-2:464028 ] - [ INFO ]  cancel
+2019-04-01 09:57:52  [ http-nio-8081-exec-8:494240 ] - [ INFO ]  非事务性调用
+2019-04-01 09:57:52  [ pool-1-thread-2:464078 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:395874258 statusCANCEL]  [LocalServer:    Name:insertMongo   key:server3   status:TRY] confirm
+2019-04-01 09:57:52  [ main-EventThread:494294 ] - [ INFO ]  /dog/server1/chain/395874258/NODES发生事件WatchedEvent state:SyncConnected type:NodeChildrenChanged path:/dog/server1/chain/395874258/NODES
+2019-04-01 09:57:52  [ main-EventThread:494301 ] - [ INFO ]  /dog/server1/chain/395874258/NODES/server3:目录已删除
+2019-04-01 09:57:52  [ main-EventThread:494324 ] - [ INFO ]  /dog/server1/chain/395874258/NODES发生事件WatchedEvent state:SyncConnected type:NodeDeleted path:/dog/server1/chain/395874258/NODES
+2019-04-01 09:57:52  [ main-EventThread:494324 ] - [ INFO ]  /dog/server1/chain/395874258/NODES回调事件：[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:52  [ main-EventThread:494324 ] - [ INFO ]  /dog/server1/chain/395874258/NODES 目录已删除
+2019-04-01 09:57:52  [ main-EventThread:494326 ] - [ INFO ]  TccAchievementEvent[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:52  [ main-EventThread:494355 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:395874258 statusTRY] clear
+2019-04-01 09:57:52  [ main-EventThread:494363 ] - [ INFO ]  完成TCC：[DogTran:  application:server1    Name:chain   key:395874258 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8081-exec-10:498055 ] - [ INFO ]  非事务性调用
+2019-04-01 09:57:56  [ http-nio-8081-exec-10:498057 ] - [ INFO ]  createTransaction:[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8081-exec-10:498123 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:970089119 statusTRY]Start OK
+2019-04-01 09:57:56  [ http-nio-8081-exec-10:498124 ] - [ INFO ]  TCC远程调用:[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8081-exec-10:498127 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8082-exec-2:485596 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8081-exec-10:498158 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8083-exec-2:467985 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8083-exec-2:467988 ] - [ INFO ]  本地事务调用：[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]: callname:insertMongo
+2019-04-01 09:57:56  [ http-nio-8083-exec-2:468008 ] - [ INFO ]  创建：/dog/server1/chain/970089119/NODES/server3
+2019-04-01 09:57:56  [ http-nio-8083-exec-2:468031 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:970089119 statusTRY] Start Call:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 09:57:56  [ http-nio-8083-exec-2:468034 ] - [ INFO ]  watch:[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:57:56  [ http-nio-8083-exec-2:468035 ] - [ INFO ]  prehandler
+2019-04-01 09:57:56  [ http-nio-8083-exec-2:468048 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:970089119 statusTRY] 设置数据:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 09:58:15  [ http-nio-8083-exec-2:486455 ] - [ ERROR ]  本地调用失败:java.util.NoSuchElementException: No value present
+2019-04-01 09:58:15  [ http-nio-8083-exec-2:486461 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:58:15  [ http-nio-8081-exec-10:516652 ] - [ INFO ]  TCC报错:[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:58:15  [ http-nio-8081-exec-10:516652 ] - [ ERROR ]  feign.FeignException: status 500 reading Server3Client#returnOrder(ReturnOrder)
+2019-04-01 09:58:15  [ http-nio-8081-exec-10:516709 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:970089119 statusTRY]: cancel
+2019-04-01 09:58:15  [ pool-1-thread-2:486534 ] - [ INFO ]  cancel
+2019-04-01 09:58:15  [ http-nio-8081-exec-10:516717 ] - [ INFO ]  非事务性调用
+2019-04-01 09:58:15  [ pool-1-thread-2:486562 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:970089119 statusCANCEL]  [LocalServer:    Name:insertMongo   key:server3   status:TRY] confirm
+2019-04-01 09:58:15  [ main-EventThread:516751 ] - [ INFO ]  /dog/server1/chain/970089119/NODES/server3:目录已删除
+2019-04-01 09:58:15  [ main-EventThread:516752 ] - [ INFO ]  /dog/server1/chain/970089119/NODES发生事件WatchedEvent state:SyncConnected type:NodeChildrenChanged path:/dog/server1/chain/970089119/NODES
+2019-04-01 09:58:15  [ main-EventThread:516768 ] - [ INFO ]  /dog/server1/chain/970089119/NODES发生事件WatchedEvent state:SyncConnected type:NodeDeleted path:/dog/server1/chain/970089119/NODES
+2019-04-01 09:58:15  [ main-EventThread:516769 ] - [ INFO ]  /dog/server1/chain/970089119/NODES 目录已删除
+2019-04-01 09:58:15  [ main-EventThread:516769 ] - [ INFO ]  /dog/server1/chain/970089119/NODES回调事件：[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:58:15  [ main-EventThread:516769 ] - [ INFO ]  TccAchievementEvent[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:58:15  [ main-EventThread:516785 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:970089119 statusTRY] clear
+2019-04-01 09:58:15  [ main-EventThread:516785 ] - [ INFO ]  完成TCC：[DogTran:  application:server1    Name:chain   key:970089119 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8081-exec-9:518832 ] - [ INFO ]  非事务性调用
+2019-04-01 09:58:17  [ http-nio-8081-exec-9:518833 ] - [ INFO ]  createTransaction:[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8081-exec-9:518901 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]Start OK
+2019-04-01 09:58:17  [ http-nio-8081-exec-9:518901 ] - [ INFO ]  TCC远程调用:[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8081-exec-9:518903 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8082-exec-7:506368 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8081-exec-9:518910 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8083-exec-3:488734 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8083-exec-3:488735 ] - [ INFO ]  本地事务调用：[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]: callname:insertMongo
+2019-04-01 09:58:17  [ http-nio-8083-exec-3:488752 ] - [ INFO ]  创建：/dog/server1/chain/1670796344/NODES/server3
+2019-04-01 09:58:17  [ http-nio-8083-exec-3:488770 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:1670796344 statusTRY] Start Call:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 09:58:17  [ http-nio-8083-exec-3:488772 ] - [ INFO ]  watch:[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:58:17  [ http-nio-8083-exec-3:488772 ] - [ INFO ]  prehandler
+2019-04-01 09:58:17  [ http-nio-8083-exec-3:488785 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:1670796344 statusTRY] 设置数据:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 09:58:40  [ pool-2-thread-1:542270 ] - [ INFO ]  tcc扫描：/dog/server1/chain
+2019-04-01 09:58:40  [ pool-2-thread-1:542350 ] - [ INFO ]  tcc扫描：/dog/server1/chainTcc
+2019-04-01 09:58:40  [ pool-2-thread-1:542362 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:58:53  [ pool-2-thread-1:542331 ] - [ INFO ]  恢复线程结束
+2019-04-01 09:59:17  [ http-nio-8081-exec-9:578912 ] - [ INFO ]  TCC报错:[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 09:59:17  [ http-nio-8081-exec-9:578912 ] - [ ERROR ]  feign.RetryableException: Read timed out executing GET http://127.0.0.1:8083/returnOrder
+2019-04-01 09:59:17  [ http-nio-8081-exec-9:578931 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]: cancel
+2019-04-01 09:59:17  [ http-nio-8081-exec-9:578946 ] - [ INFO ]  非事务性调用
+2019-04-01 09:59:17  [ main-EventThread:549222 ] - [ INFO ]  WatchedEvent state:Disconnected type:None path:null
+2019-04-01 09:59:22  [ pool-8-thread-1:553722 ] - [ ERROR ]  org.dog.core.jms.exception.ConnectException
+2019-04-01 09:59:22  [ main-EventThread:553723 ] - [ INFO ]  WatchedEvent state:Disconnected type:None path:null
+2019-04-01 09:59:52  [ http-nio-8083-exec-3:583390 ] - [ ERROR ]  本地调用失败:java.util.NoSuchElementException: No value present
+2019-04-01 09:59:52  [ http-nio-8083-exec-3:583415 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:1670796344 statusTRY]
+2019-04-01 10:00:47  [ main-EventThread:0 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:00:47  [ main-EventThread:8 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:00:47  [ main:22 ] - [ INFO ]  server3: started
+2019-04-01 10:01:47  [ pool-8-thread-1:60124 ] - [ INFO ]  发送call 节点掉线事件：[DogTran:  application:server1    Name:chain   key:2116881305 statusUNKNOWN]
+2019-04-01 10:01:47  [ pool-8-thread-1:60132 ] - [ INFO ]  CallNodeOfflineEvent[DogTran:  application:server1    Name:chain   key:2116881305 statusUNKNOWN]
+2019-04-01 10:01:47  [ pool-1-thread-1:60145 ] - [ INFO ]  confirm
+2019-04-01 10:01:47  [ pool-1-thread-1:60148 ] - [ INFO ]  unLock:dbnametestID110
+2019-04-01 10:01:47  [ pool-8-thread-1:60175 ] - [ INFO ]  发送call 节点掉线事件：[DogTran:  application:server1    Name:chain   key:1670796344 statusUNKNOWN]
+2019-04-01 10:01:47  [ pool-8-thread-1:60176 ] - [ INFO ]  CallNodeOfflineEvent[DogTran:  application:server1    Name:chain   key:1670796344 statusUNKNOWN]
+2019-04-01 10:01:47  [ pool-8-thread-1:60184 ] - [ INFO ]  恢复线程结束
+2019-04-01 10:01:47  [ pool-1-thread-2:60181 ] - [ INFO ]  cancel
+2019-04-01 10:01:47  [ pool-1-thread-1:60185 ] - [ ERROR ]  删除时，被其他节点托管！，将由其他节点删除！
+2019-04-01 10:01:47  [ pool-1-thread-1:60188 ] - [ ERROR ]  org.dog.core.jms.exception.ConnectException
+2019-04-01 10:01:47  [ pool-1-thread-1:60188 ] - [ ERROR ]  confirError[DogTran:  application:server1    Name:chain   key:2116881305 statusCONFIRM][LocalServer:    Name:insertMongo   key:server3   status:TRY]
+2019-04-01 10:01:47  [ pool-1-thread-2:60205 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:1670796344 statusCANCEL]  [LocalServer:    Name:insertMongo   key:server3   status:TRY] confirm
+2019-04-01 10:02:20  [ main-EventThread:0 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:02:20  [ main-EventThread:18 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:02:20  [ main:26 ] - [ INFO ]  server3: started
+2019-04-01 10:02:42  [ main-EventThread:0 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:02:42  [ main-EventThread:8 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:02:42  [ main:15 ] - [ INFO ]  server1: started
+2019-04-01 10:02:47  [ main-EventThread:0 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:02:47  [ main-EventThread:18 ] - [ INFO ]  WatchedEvent state:SyncConnected type:None path:null
+2019-04-01 10:02:47  [ main:23 ] - [ INFO ]  server2: started
+2019-04-01 10:03:09  [ http-nio-8081-exec-1:27672 ] - [ INFO ]  非事务性调用
+2019-04-01 10:03:09  [ http-nio-8081-exec-1:27703 ] - [ INFO ]  createTransaction:[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:09  [ http-nio-8081-exec-1:27768 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:49602442 statusTRY]Start OK
+2019-04-01 10:03:09  [ http-nio-8081-exec-1:27769 ] - [ INFO ]  TCC远程调用:[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:09  [ http-nio-8081-exec-1:27790 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ http-nio-8082-exec-1:22440 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ http-nio-8081-exec-1:28011 ] - [ INFO ]  事务型远程调用:[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ http-nio-8083-exec-2:49354 ] - [ INFO ]  事务性调用：[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ http-nio-8083-exec-2:49437 ] - [ INFO ]  本地事务调用：[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]: callname:insertMongo
+2019-04-01 10:03:10  [ http-nio-8083-exec-2:49501 ] - [ INFO ]  创建：/dog/server1/chain/49602442/NODES/server3
+2019-04-01 10:03:10  [ http-nio-8083-exec-2:49530 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:49602442 statusTRY] Start Call:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 10:03:10  [ http-nio-8083-exec-2:49540 ] - [ INFO ]  watch:[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ http-nio-8083-exec-2:49547 ] - [ INFO ]  prehandler
+2019-04-01 10:03:10  [ http-nio-8083-exec-2:49579 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:49602442 statusTRY] 设置数据:[LocalServer:    Name:insertMongo   key:server3   status:TRY] OK
+2019-04-01 10:03:10  [ http-nio-8081-exec-1:28634 ] - [ INFO ]  TCC返回:[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ http-nio-8081-exec-1:28651 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:49602442 statusTRY]: confirm
+2019-04-01 10:03:10  [ pool-1-thread-1:49840 ] - [ INFO ]  confirm
+2019-04-01 10:03:10  [ pool-1-thread-1:49862 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:49602442 statusCONFIRM]  [LocalServer:    Name:insertMongo   key:server3   status:TRY] confirm
+2019-04-01 10:03:10  [ main-EventThread:28706 ] - [ INFO ]  /dog/server1/chain/49602442/NODES/server3:目录已删除
+2019-04-01 10:03:10  [ main-EventThread:28707 ] - [ INFO ]  /dog/server1/chain/49602442/NODES发生事件WatchedEvent state:SyncConnected type:NodeChildrenChanged path:/dog/server1/chain/49602442/NODES
+2019-04-01 10:03:10  [ main-EventThread:28722 ] - [ INFO ]  /dog/server1/chain/49602442/NODES回调事件：[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ main-EventThread:28724 ] - [ INFO ]  TccAchievementEvent[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ main-EventThread:28740 ] - [ INFO ]  [DogTran:  application:server1    Name:chain   key:49602442 statusTRY] clear
+2019-04-01 10:03:10  [ main-EventThread:28742 ] - [ INFO ]  完成TCC：[DogTran:  application:server1    Name:chain   key:49602442 statusTRY]
+2019-04-01 10:03:10  [ main-EventThread:28742 ] - [ INFO ]  /dog/server1/chain/49602442/NODES发生事件WatchedEvent state:SyncConnected type:NodeDeleted path:/dog/server1/chain/49602442/NODES
+2019-04-01 10:03:10  [ main-EventThread:28742 ] - [ INFO ]  /dog/server1/chain/49602442/NODES 目录已删除
