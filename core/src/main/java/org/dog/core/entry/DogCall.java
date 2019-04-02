@@ -55,7 +55,7 @@ public class DogCall implements Serializable {
 //    }
 
     public DogCall(String name, String key) {
-        this.name = name;
+        this.name = name ;
         this.key = key;
         this.serverStatus = DogCallStatus.TRY;
     }

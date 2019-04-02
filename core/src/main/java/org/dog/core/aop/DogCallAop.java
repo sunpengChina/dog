@@ -17,6 +17,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 import static org.dog.core.util.ThreadManager.clearCallAndContext;
 
 
@@ -39,6 +41,8 @@ public class DogCallAop{
     public Object doAroundtransaction(ProceedingJoinPoint pjp, DogCallAnnotation ad) throws Throwable {
 
         String callName = (ad.Name().equals("")? pjp.getSignature().toString().replace('.','_').replace(',','_').replace(' ','_').replace('(','_').replace(')','_'):ad.Name());
+
+        callName = callName + UUID.randomUUID().toString().replace("-","");
 
         Object result = null;
 
