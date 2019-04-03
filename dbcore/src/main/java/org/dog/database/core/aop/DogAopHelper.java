@@ -7,22 +7,20 @@ import org.dog.database.core.annotation.DogDb;
 import org.dog.database.core.annotation.DogTable;
 import org.dog.database.core.annotation.MatchType;
 import org.dog.database.core.annotation.QueryArg;
-import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint;
-import org.springframework.aop.framework.ReflectiveMethodInvocation;
+import org.dog.database.core.util.ReflectUtil;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-class AopHelper {
-
+class DogAopHelper {
 
     private DogDb dogDb;
 
     private ProceedingJoinPoint pjp;
 
-    public AopHelper(ProceedingJoinPoint pjp, DogDb db) {
+    public DogAopHelper(ProceedingJoinPoint pjp, DogDb db) {
 
         this.dogDb = db;
 
@@ -31,34 +29,23 @@ class AopHelper {
     }
 
 
-    private List<Object> getDogTableQueryArgObjects(Object object) throws IllegalArgumentException, IllegalAccessException {
+    private List<Object> getFields(Object object) throws IllegalArgumentException, IllegalAccessException {
 
-        List<Object> argObjs = new ArrayList<>();
+        return  ReflectUtil.getFields(object,DogTable.class,QueryArg.class);
 
-        if (object.getClass().getAnnotation(DogTable.class) != null) {
-
-            for (Field field : object.getClass().getDeclaredFields()) {
-                QueryArg queryarg = field.getAnnotation(QueryArg.class);
-                if (queryarg != null) {
-                    field.setAccessible(true);
-                    argObjs.add(field.get(object));
-                }
-            }
-        }
-        return argObjs;
     }
 
-    private List<List<Object>> getIterableDogTableQueryArgObjects(Object object) throws IllegalArgumentException, IllegalAccessException {
+    private List<List<Object>> getFieldsArray(Object object) throws IllegalArgumentException, IllegalAccessException {
 
         List<List<Object>> argObjs = new ArrayList<>();
 
-        if (Iterable.class.isAssignableFrom(object.getClass())) {
+        if (ReflectUtil.iterable(object)) {
 
             Iterator iterator = ((Iterable) object).iterator();
 
             while (iterator.hasNext()) {
 
-                argObjs.add(getDogTableQueryArgObjects(iterator.next()));
+                argObjs.add(getFields(iterator.next()));
 
             }
         }
@@ -66,11 +53,12 @@ class AopHelper {
         return argObjs;
     }
 
+
     private List<Object> getQueryArgInParamter(Object[] rawArgs) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
         List<Object> argObjs = new ArrayList<>();
 
-        Annotation[][] annotations = getMethodArgAnnotations(pjp);
+        Annotation[][] annotations = ReflectUtil.getParameterAnnotations(pjp);
 
         for (int i = 0; i < rawArgs.length; i++) {
 
@@ -103,31 +91,6 @@ class AopHelper {
         return null;
     }
 
-    private  boolean allArgIsIterable(Class<?>[] clazzs){
-
-        for(Class<?> clazz : clazzs){
-
-            if(!Iterable.class.isAssignableFrom(clazz)){
-
-                return  false;
-
-            }
-        }
-        return  true;
-    }
-
-    private  boolean allArgNotIterable(Class<?>[] clazzs){
-
-        for(Class<?> clazz : clazzs){
-
-            if(Iterable.class.isAssignableFrom(clazz)){
-
-                return  false;
-
-            }
-        }
-        return  true;
-    }
 
 
     public Pair<MatchType,Pair<Method, Object[]>> getMethodAndArgObjects(String methodName) throws NoSuchFieldException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
@@ -179,7 +142,7 @@ class AopHelper {
         /**
          * 获取 DogTable 中的参数
          */
-        List<Object> queryArgsInDogTable = getDogTableQueryArgObjects(rawArgs.get(0));
+        List<Object> queryArgsInDogTable = getFields(rawArgs.get(0));
 
         if (queryArgsInDogTable.size() != 0) {
 
@@ -199,7 +162,7 @@ class AopHelper {
         /**
          * 直接通过 Iterator 中的参数传递  -> 只支持一个Iterator参数
          */
-        List<List<Object>> iterableObjects = getIterableDogTableQueryArgObjects(rawArgs.get(0));
+        List<List<Object>> iterableObjects = getFieldsArray(rawArgs.get(0));
 
         if (iterableObjects.size() == 0) {
 
@@ -231,7 +194,7 @@ class AopHelper {
 
                     Class<?>[] clazzs =   method.getParameterTypes();
 
-                    if(allArgIsIterable(clazzs)){
+                    if(ReflectUtil.allIterable(clazzs)){
 
                         List<List<Object>> ret = new ArrayList<>();
 
@@ -253,7 +216,7 @@ class AopHelper {
                     }
 
 
-                    if(allArgNotIterable(clazzs)){
+                    if(ReflectUtil.noneIterable(clazzs)){
 
                         return new Pair<>(MatchType.IteratorMutiCall,new  Pair<>(method, iterableObjects.toArray()));
                     }
@@ -414,6 +377,12 @@ class AopHelper {
 
         if (object.getClass().getAnnotation(DogTable.class) != null) {
 
+            DogTable dogTableAnnotation = object.getClass().getAnnotation(DogTable.class);
+
+            dbName = dogTableAnnotation.dbName();
+
+            tableName = dogTableAnnotation.tableName();
+
             for (Field field : object.getClass().getDeclaredFields()) {
 
                 QueryArg queryarg = field.getAnnotation(QueryArg.class);
@@ -442,7 +411,7 @@ class AopHelper {
 
         Map<TccLock,Object[]>  ret = new HashMap<>();
 
-        Annotation[][] annotations =  getMethodArgAnnotations(pjp);
+        Annotation[][] annotations =  ReflectUtil.getParameterAnnotations(pjp);
 
         Object[] rawArgs = pjp.getArgs();
 
@@ -593,11 +562,18 @@ class AopHelper {
     }
 
 
+    /**
+     * 一个参数只支持 DogTable 和 Iterator 两种，或者是单个被QueryArg标注的方法
+     * @return
+     * @throws NoSuchFieldException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
     public List<Object> getQueryArgs() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
         List<Object> result = new ArrayList<>();
 
-        Annotation[][] annotations = getMethodArgAnnotations(pjp);
+        Annotation[][] annotations = ReflectUtil.getParameterAnnotations(pjp);
 
         Object[] args = pjp.getArgs();
 
@@ -643,71 +619,9 @@ class AopHelper {
 
     public List<Method> getCandidateMethods(String methodName) throws SecurityException {
 
-        List<Method> methods = new ArrayList<>();
-
         Class<?> clazz = dogDb.queryClass();
 
-        for (Method method : clazz.getMethods()) {
-
-            if (method.getName().equals(methodName)) {
-
-                if (dogDb.argClass().length == 0) {
-
-                    methods.add(method);
-
-                } else {
-
-                    if (method.getParameterTypes().length == dogDb.argClass().length) {
-
-                        boolean hit = true;
-
-                        for (int i = 0; i < dogDb.argClass().length; i++) {
-
-                            Class<?> methodarg = method.getParameterTypes()[i];
-
-                            Class<?> aimType = dogDb.argClass()[i];
-
-                            if (!methodarg.equals(aimType)) {
-
-                                hit = false;
-
-                                break;
-                            }
-
-                        }
-
-                        if (hit) {
-
-                            methods.add(method);
-
-                        }
-
-
-                    } else {
-
-
-                    }
-                }
-            }
-        }
-
-        return methods;
+        return ReflectUtil.getMethods(clazz,methodName);
     }
-
-    private static Annotation[][] getMethodArgAnnotations(ProceedingJoinPoint pjp) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-
-        MethodInvocationProceedingJoinPoint methodJoinPoint = (MethodInvocationProceedingJoinPoint) pjp;
-
-        Field methodInvocationfield = methodJoinPoint.getClass().getDeclaredField("methodInvocation");
-
-        methodInvocationfield.setAccessible(true);
-
-        //1参数的标注调用反射类
-        Annotation[][] argAnnotations = ((ReflectiveMethodInvocation) methodInvocationfield.get(methodJoinPoint)).getMethod().getParameterAnnotations();
-
-
-        return argAnnotations;
-    }
-
 
 }

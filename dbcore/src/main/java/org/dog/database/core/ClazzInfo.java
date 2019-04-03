@@ -1,8 +1,42 @@
 package org.dog.database.core;
 
+import org.dog.database.core.annotation.OperationType;
+import org.dog.database.core.util.ReflectUtil;
+
 import java.io.Serializable;
+import java.lang.reflect.Method;
 
 public class ClazzInfo implements Serializable {
+    public Class<?> getClazz() {
+        return clazz;
+    }
+
+    public void setClazz(Class<?> clazz) {
+        this.clazz = clazz;
+    }
+
+    public String getMethodString() {
+        return methodString;
+    }
+
+    public void setMethodString(String methodString) {
+        this.methodString = methodString;
+    }
+
+    public OperationType getOperationType() {
+        return operationType;
+    }
+
+    public void setOperationType(OperationType operationType) {
+        this.operationType = operationType;
+    }
+
+    private Class<?> clazz;
+
+    private String methodString;
+
+    private OperationType operationType;
+
 
     @Override
     public int hashCode() {
@@ -16,7 +50,7 @@ public class ClazzInfo implements Serializable {
 
             ClazzInfo other= (ClazzInfo) obj;
 
-            return clazz.equals(other.clazz)&& saveMethod.equals(other.saveMethod);
+            return clazz.equals(other.clazz)&& methodString.equals(other.methodString)&& operationType.equals(other.operationType);
 
         }
 
@@ -27,39 +61,22 @@ public class ClazzInfo implements Serializable {
 
     }
 
-    public ClazzInfo(Class<?> clazz, String saveMethod,String deleteMethod) {
+    public ClazzInfo(Class<?> clazz, String method, OperationType operationType) {
         this.clazz = clazz;
-        this.saveMethod = saveMethod;
-        this.deleteMethod = deleteMethod;
+        this.methodString = method;
+        this.operationType = operationType;
     }
 
-    private Class<?> clazz;
+    public Method method()throws NoSuchMethodException {
 
-    private String saveMethod;
-
-    private String deleteMethod;
-
-    public String getDeleteMethod() {
-        return deleteMethod;
+        return  ReflectUtil.getMethod(clazz,methodString);
     }
 
-    public void setDeleteMethod(String deleteMethod) {
-        this.deleteMethod = deleteMethod;
-    }
 
-    public Class<?> getClazz() {
-        return clazz;
-    }
 
-    public void setClazz(Class<?> clazz) {
-        this.clazz = clazz;
-    }
 
-    public String getSaveMethod() {
-        return saveMethod;
-    }
 
-    public void setSaveMethod(String saveMethod) {
-        this.saveMethod = saveMethod;
-    }
+
+
+
 }

@@ -40,7 +40,9 @@ public class Server3Controller {
     @RequestMapping("/returnOrder")
     public String tran(@RequestBody ReturnOrder returnOrder) {
 
-        return  mongoServer.insertReturnOrder(returnOrder);
+        mongoServer.insertReturnOrder(new ReturnOrder(returnOrder.getId(),returnOrder.getOther()));
+
+        return "OK";
     }
 
     @RequestMapping("/test/{value}")

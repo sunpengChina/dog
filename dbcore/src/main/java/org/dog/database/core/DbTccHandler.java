@@ -9,6 +9,7 @@ import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.TccContext;
 import org.dog.core.entry.TccLock;
+import org.dog.database.core.annotation.OperationType;
 import org.dog.database.core.buffer.IDataBuffer;
 
 import java.lang.reflect.Method;
@@ -36,7 +37,7 @@ public class DbTccHandler extends TccHandler {
 
         for (Method method : clazz.getMethods()) {
 
-            if (method.getName().equals(methodName) && method.getParameters().length == 1) {
+            if (method.getName().equals(methodName)) {
 
                 return method;
 
@@ -63,12 +64,15 @@ public class DbTccHandler extends TccHandler {
 
                 Set<TccLock> tccLocks = (Set<TccLock>) values.getValue();
 
+
+                OperationType operationType = clazzInfo.getOperationType();
+
                 /**
                  *  修改型事务的回滚
                  */
-                if (!clazzInfo.getSaveMethod().equals("")) {
+                if (!operationType.equals(OperationType.UPDATEDATA)) {
 
-                    Method method = getMethod(clazzInfo.getClazz(),clazzInfo.getSaveMethod());
+                    Method method = clazzInfo.method();
 
                     /**
                      * 必然有缓存的锁
@@ -76,6 +80,8 @@ public class DbTccHandler extends TccHandler {
                     for (TccLock e : tccLocks) {
 
                         Object bufferedData = dataBuffer.getData(e);
+
+                        method.setAccessible(true);
 
                         method.invoke(queryBean, bufferedData);
 
@@ -87,14 +93,16 @@ public class DbTccHandler extends TccHandler {
                 /**
                  *  回滚插入型事务
                  */
-                if (!clazzInfo.getDeleteMethod().equals("")) {
+                if (clazzInfo.getOperationType().equals(OperationType.INSERTNEWDATA)) {
 
-                    Method method = getMethod(clazzInfo.getClazz(),clazzInfo.getDeleteMethod());
+                    Method method = clazzInfo.method();
 
 
                     for (TccLock e : tccLocks) {
 
                         Object bufferedData = dataBuffer.getData(e);
+
+                        method.setAccessible(true);
 
                         method.invoke(queryBean,(Object[])bufferedData);
 

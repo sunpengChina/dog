@@ -1,5 +1,7 @@
 package org.dog.database.core.annotation;
 
-public enum OperationType {
-    UPDATEDATA,INSERTNEWDATA,DELETEALL
+import java.io.Serializable;
+
+public enum OperationType implements Serializable {
+    UPDATEDATA,INSERTNEWDATA
 }

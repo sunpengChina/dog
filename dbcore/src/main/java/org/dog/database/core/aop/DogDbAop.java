@@ -29,12 +29,25 @@ public class DogDbAop {
     @Autowired
     IDataBuffer buffer;
 
+
+    private boolean updateData(DogDb db){
+
+        return  ThreadManager.exsit() && db.type().equals(OperationType.UPDATEDATA);
+
+    }
+
+    private boolean insertData(DogDb db){
+
+        return  ThreadManager.exsit() && db.type().equals(OperationType.INSERTNEWDATA);
+
+    }
+
     @Around("@annotation(org.dog.database.core.annotation.DogDb)  && @annotation(db)")
     public Object doAroundtransaction(ProceedingJoinPoint pjp, DogDb db) throws Throwable {
 
         Object result = null;
 
-        AopHelper aopHelper = new AopHelper(pjp, db);
+        DogAopHelper aopHelper = new DogAopHelper(pjp, db);
 
         try {
 
@@ -43,21 +56,21 @@ public class DogDbAop {
              */
             if (ThreadManager.exsit() && db.type().equals(OperationType.UPDATEDATA)) {
 
-                Pair<MatchType,Pair<Method, Object[]>>  methodAndObjs = aopHelper.getMethodAndArgObjects(db.queryMethodName());
-
-                boolean multicall = methodAndObjs.getKey().equals(MatchType.IteratorMutiCall);
-
                 Map<TccLock, Object> locks = new HashMap<>();
+
+                Pair<MatchType,Pair<Method, Object[]>>  methodAndObjs = aopHelper.getMethodAndArgObjects(db.queryMethodName());
 
                 Pair<Method, Object[]> query = methodAndObjs.getValue();
 
                 Object queryObj = ApplicationUtil.getApplicationContext().getBean(db.queryClass());
 
-                if (!multicall) {
+                if (!methodAndObjs.getKey().equals(MatchType.IteratorMutiCall)) {
+
+                    query.getKey().setAccessible(true);
 
                     Object queryData = query.getKey().invoke(queryObj, query.getValue());
 
-                    if (java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
+                    if (queryData!=null && java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
 
                         if (((Optional) queryData).isPresent()) {
 
@@ -79,9 +92,11 @@ public class DogDbAop {
 
                     for(Object oneArg:subArgDatas){
 
+                        query.getKey().setAccessible(true);
+
                         Object queryData = query.getKey().invoke(queryObj,((List)oneArg).toArray());
 
-                        if (java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
+                        if (queryData!=null && java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
 
                             if (((Optional) queryData).isPresent()) {
 
@@ -111,7 +126,7 @@ public class DogDbAop {
 
                 Map<Object, Object> context = ThreadManager.getTccContext().getContext();
 
-                ClazzInfo clazzInfo = new ClazzInfo(db.queryClass(), db.saveMethodName(),"");
+                ClazzInfo clazzInfo  = new ClazzInfo(db.queryClass(), db.saveMethodName(),OperationType.UPDATEDATA);
 
                 if (context.containsKey(clazzInfo)) {
 
@@ -134,7 +149,7 @@ public class DogDbAop {
 
                 Map<Object, Object> context = ThreadManager.getTccContext().getContext();
 
-                ClazzInfo clazzInfo = new ClazzInfo(db.queryClass(), "",db.deleteMethodName());
+                ClazzInfo clazzInfo =   new ClazzInfo(db.queryClass(),db.deleteMethodName(),OperationType.INSERTNEWDATA);
 
                 Map<TccLock, Object> locks = new HashMap<>();
 
