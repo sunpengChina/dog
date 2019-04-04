@@ -1,4 +1,5 @@
 package org.dog.test.server1.client;
+import org.dog.test.server1.ReturnOrder;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -12,4 +13,6 @@ public interface Server2Client {
     @RequestMapping("/tran")
     String tran(TranD tranD) throws Exception;
 
+    @RequestMapping("/returnOrder")
+    String returnOrder(ReturnOrder returnOrder) throws Exception;
 }

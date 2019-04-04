@@ -18,6 +18,7 @@
         <module>protostuff</module>
         <module>dbcore</module>
         <module>springmongo</module>
+        <module>springjpa</module>
     </modules>
 
 

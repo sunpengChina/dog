@@ -1,6 +1,7 @@
 package org.dog.database.core.util;
 
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.dog.core.util.Pair;
 import org.dog.database.core.annotation.DogTable;
 import org.dog.database.core.annotation.QueryArg;
 import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint;
@@ -13,6 +14,76 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReflectUtil {
+
+    public static <T extends Annotation> Pair<List<T>, List<Field>> getAnnotationedFields(Class<?> clazz, Class<? extends  Annotation> annotationClazz) throws IllegalArgumentException, IllegalAccessException {
+
+        List<T> queryArgs = new ArrayList<>();
+
+        List<Field> fields = new ArrayList<>();
+
+        /**
+         * 不包括父类的字段
+         */
+        for (Field field : clazz.getDeclaredFields()) {
+
+            T queryArg = (T)field.getAnnotation(annotationClazz);
+
+            if(queryArg!=null){
+
+                field.setAccessible(true);
+
+                queryArgs.add(queryArg);
+
+                fields.add(field);
+            }
+
+        }
+
+        return new Pair<>(queryArgs, fields);
+    }
+
+
+    public static List<Object> getFieldsValues(Object obj, List<Field> fields) throws IllegalArgumentException, IllegalAccessException {
+
+        List<Object> values = new ArrayList<>();
+
+        for(Field field:fields){
+
+            values.add(field.get(obj));
+        }
+
+        return values;
+    }
+
+
+    /**
+     * @param args        方法参数
+     * @param annotations 方法参数上的标注
+     * @return
+     */
+    public static <T extends Annotation> Pair<List<T>, List<Object>> getAnnotationedParameter(Object[] args, Annotation[][] annotations, Class<? extends Annotation> clazz) {
+
+        List<T> queryArgs = new ArrayList<>();
+
+        List<Object> objects = new ArrayList<>();
+
+        for (int i = 0; i < args.length; i++) {
+
+            for (Annotation annotation : annotations[i]) {
+
+                 if (annotation.annotationType().equals(clazz)){
+
+                     queryArgs.add((T) annotation);
+
+                     objects.add(args[i]);
+
+                 }
+            }
+
+        }
+
+        return new Pair<>(queryArgs, objects);
+    }
 
     public static Annotation[][] getParameterAnnotations(ProceedingJoinPoint pjp) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
@@ -27,12 +98,12 @@ public class ReflectUtil {
         return argAnnotations;
     }
 
-    public  static boolean iterable(Object object){
+    public static boolean iterable(Object object) {
 
-         return  Iterable.class.isAssignableFrom(object.getClass());
+        return Iterable.class.isAssignableFrom(object.getClass());
     }
 
-    public static List<Object> getFields(Object object,Class<? extends Annotation> clazzAnnotationClazz,Class<? extends Annotation> fieldAnnotationClazz) throws IllegalArgumentException, IllegalAccessException {
+    public static List<Object> getFields(Object object, Class<? extends Annotation> clazzAnnotationClazz, Class<? extends Annotation> fieldAnnotationClazz) throws IllegalArgumentException, IllegalAccessException {
 
         List<Object> argObjs = new ArrayList<>();
 
@@ -55,39 +126,39 @@ public class ReflectUtil {
         return argObjs;
     }
 
-    public static boolean allIterable(Class<?>[] clazzs){
+    public static boolean allIterable(Class<?>[] clazzs) {
 
-        for(Class<?> clazz : clazzs){
+        for (Class<?> clazz : clazzs) {
 
-            if(!Iterable.class.isAssignableFrom(clazz)){
+            if (!Iterable.class.isAssignableFrom(clazz)) {
 
-                return  false;
-
-            }
-        }
-        return  true;
-    }
-
-    public static boolean noneIterable(Class<?>[] clazzs){
-
-        for(Class<?> clazz : clazzs){
-
-            if(Iterable.class.isAssignableFrom(clazz)){
-
-                return  false;
+                return false;
 
             }
         }
-        return  true;
+        return true;
     }
 
-    public  static Method getMethod(Class<?> clazz, String methodStr) throws NoSuchMethodException {
+    public static boolean noneIterable(Class<?>[] clazzs) {
+
+        for (Class<?> clazz : clazzs) {
+
+            if (Iterable.class.isAssignableFrom(clazz)) {
+
+                return false;
+
+            }
+        }
+        return true;
+    }
+
+    public static Method getMethod(Class<?> clazz, String methodStr) throws NoSuchMethodException {
 
         Method[] fullMethod = new Method[clazz.getMethods().length + clazz.getDeclaredMethods().length];
 
         System.arraycopy(clazz.getMethods(), 0, fullMethod, 0, clazz.getMethods().length);
 
-        System.arraycopy(clazz.getDeclaredMethods(), 0, fullMethod,  clazz.getMethods().length, clazz.getDeclaredMethods().length);
+        System.arraycopy(clazz.getDeclaredMethods(), 0, fullMethod, clazz.getMethods().length, clazz.getDeclaredMethods().length);
 
         for (Method method : clazz.getMethods()) {
 
@@ -103,7 +174,7 @@ public class ReflectUtil {
         throw new NoSuchMethodException(methodStr);
     }
 
-    public static List<Method> getMethods(Class<?>  clazz ,String methodStr) {
+    public static List<Method> getMethods(Class<?> clazz, String methodStr) {
 
         List<Method> methods = new ArrayList<>();
 
@@ -111,7 +182,7 @@ public class ReflectUtil {
 
         System.arraycopy(clazz.getMethods(), 0, fullMethod, 0, clazz.getMethods().length);
 
-        System.arraycopy(clazz.getDeclaredMethods(), 0, fullMethod,  clazz.getMethods().length, clazz.getDeclaredMethods().length);
+        System.arraycopy(clazz.getDeclaredMethods(), 0, fullMethod, clazz.getMethods().length, clazz.getDeclaredMethods().length);
 
         for (Method method : fullMethod) {
 
@@ -127,15 +198,15 @@ public class ReflectUtil {
         return methods;
     }
 
-    public static List<Method> getMethods(Class<?>  clazz ,String methodStr,int parameterNum) throws NoSuchMethodException {
+    public static List<Method> getMethods(Class<?> clazz, String methodStr, int parameterNum) throws NoSuchMethodException {
 
-        List<Method> methods = getMethods(clazz,methodStr);
+        List<Method> methods = getMethods(clazz, methodStr);
 
         List<Method> filteredMethods = new ArrayList<>();
 
-        for(Method method:methods){
+        for (Method method : methods) {
 
-            if(method.getParameters().length == parameterNum){
+            if (method.getParameters().length == parameterNum) {
 
                 filteredMethods.add(method);
             }

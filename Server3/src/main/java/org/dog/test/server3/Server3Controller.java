@@ -18,8 +18,6 @@ public class Server3Controller {
     @Autowired
     MongoServer mongoServer;
 
-    @Autowired
-    MysqlServer mysqlServer;
 
 
     @RequestMapping("/hello")
@@ -32,7 +30,6 @@ public class Server3Controller {
 
         mongoServer.insertMongo(trans.getValue1());
 
-        mysqlServer.insertMysql(trans.getValue2());
 
         return "OK";
     }
@@ -42,13 +39,14 @@ public class Server3Controller {
 
         mongoServer.insertReturnOrder(new ReturnOrder(returnOrder.getId(),returnOrder.getOther()));
 
+
         return "OK";
     }
 
     @RequestMapping("/test/{value}")
     public String tran(@PathVariable String value) {
 
-        mongoServer.insertMongo(value);
+         //mongoServer.insertMongo(value);
 
         return "OK";
     }

@@ -1,5 +1,6 @@
 package org.dog.database.core;
 
+import org.dog.database.core.annotation.DogDb;
 import org.dog.database.core.annotation.OperationType;
 import org.dog.database.core.util.ReflectUtil;
 
@@ -7,6 +8,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 
 public class ClazzInfo implements Serializable {
+
     public Class<?> getClazz() {
         return clazz;
     }
@@ -61,7 +63,21 @@ public class ClazzInfo implements Serializable {
 
     }
 
-    public ClazzInfo(Class<?> clazz, String method, OperationType operationType) {
+
+    public static ClazzInfo createClazzInfo(DogDb dogDb){
+
+        if(dogDb.operationType().equals(OperationType.UPDATEDATA)){
+
+            return  new ClazzInfo(dogDb.repositoryClass(),dogDb.saveMethodName(),dogDb.operationType());
+
+        }else {
+
+            return  new ClazzInfo(dogDb.repositoryClass(),dogDb.deleteMethodName(),dogDb.operationType());
+
+        }
+    }
+
+    private ClazzInfo(Class<?> clazz, String method, OperationType operationType) {
         this.clazz = clazz;
         this.methodString = method;
         this.operationType = operationType;

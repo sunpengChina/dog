@@ -1,8 +1,13 @@
-package org.dog.test.server3.dao;
+package org.dog.test.server2.dao;
 
 import lombok.Data;
 import org.dog.database.core.annotation.DogTable;
 import org.dog.database.core.annotation.QueryArg;
+import javax.persistence.*;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import java.io.Serializable;
 //import org.springframework.data.annotation.Id;
 //import org.springframework.data.core.core.mapping.Document;
@@ -15,10 +20,13 @@ import java.io.Serializable;
  * @Version: 1.0
  */
 @Data
-@DogTable(tableName = "test",dbName = "dbname")
+@DogTable(tableName = "returnorder",dbName = "dbname")
+@Entity
+@Table(name="returnorder")
 public class ReturnOrder implements Serializable {
 
 	@QueryArg(argName = "ID")
+    @Id
 	private String id;
 
 	private String other;

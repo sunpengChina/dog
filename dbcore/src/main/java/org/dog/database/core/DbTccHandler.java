@@ -33,7 +33,7 @@ public class DbTccHandler extends TccHandler {
     }
 
 
-    private Method getMethod(Class<?> clazz,String methodName) throws NoSuchMethodException {
+    private Method getMethod(Class<?> clazz, String methodName) throws NoSuchMethodException {
 
         for (Method method : clazz.getMethods()) {
 
@@ -60,61 +60,39 @@ public class DbTccHandler extends TccHandler {
 
                 ClazzInfo clazzInfo = (ClazzInfo) values.getKey();
 
-                Object queryBean = ApplicationUtil.getApplicationContext().getBean(clazzInfo.getClazz());
+                Object repositoryBean = ApplicationUtil.getApplicationContext().getBean(clazzInfo.getClazz());
 
                 Set<TccLock> tccLocks = (Set<TccLock>) values.getValue();
 
-
-                OperationType operationType = clazzInfo.getOperationType();
-
-                /**
-                 *  修改型事务的回滚
-                 */
-                if (!operationType.equals(OperationType.UPDATEDATA)) {
-
-                    Method method = clazzInfo.method();
-
-                    /**
-                     * 必然有缓存的锁
-                     */
-                    for (TccLock e : tccLocks) {
-
-                        Object bufferedData = dataBuffer.getData(e);
-
-                        method.setAccessible(true);
-
-                        method.invoke(queryBean, bufferedData);
-
-                        dataBuffer.clearData(e);
-                    }
-
-                }
+                Method method = clazzInfo.method();
 
                 /**
-                 *  回滚插入型事务
+                 * 必然有缓存的锁
                  */
-                if (clazzInfo.getOperationType().equals(OperationType.INSERTNEWDATA)) {
+                for (TccLock e : tccLocks) {
 
-                    Method method = clazzInfo.method();
+                    Object bufferedData = dataBuffer.getData(e);
 
+                    method.setAccessible(true);
 
-                    for (TccLock e : tccLocks) {
+                    if(clazzInfo.getOperationType().equals(OperationType.INSERTNEWDATA)){
 
-                        Object bufferedData = dataBuffer.getData(e);
+                        method.invoke(repositoryBean, (Object[])bufferedData);
 
-                        method.setAccessible(true);
+                    }else {
 
-                        method.invoke(queryBean,(Object[])bufferedData);
-
-                        dataBuffer.clearData(e);
+                        method.invoke(repositoryBean, bufferedData);
                     }
 
 
-                }
+                    logger.info("Cancel method:"+method.getName());
 
+                    logger.info("Cancel parameter:"+bufferedData);
+
+                    dataBuffer.clearData(e);
+                }
 
             }
-
 
         } catch (Exception g) {
 
@@ -134,9 +112,6 @@ public class DbTccHandler extends TccHandler {
 
         for (TccLock lock : context.getLockList()) {
 
-            /**
-             * 有可能有锁无缓存
-             */
             dataBuffer.clearData(lock);
 
         }

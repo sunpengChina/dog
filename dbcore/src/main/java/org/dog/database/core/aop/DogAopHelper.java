@@ -1,11 +1,13 @@
 package org.dog.database.core.aop;
 
+import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.dog.core.entry.TccLock;
+import org.dog.core.tccserver.TccServer;
 import org.dog.core.util.Pair;
 import org.dog.database.core.annotation.DogDb;
 import org.dog.database.core.annotation.DogTable;
-import org.dog.database.core.annotation.MatchType;
+import org.dog.database.core.annotation.OperationType;
 import org.dog.database.core.annotation.QueryArg;
 import org.dog.database.core.util.ReflectUtil;
 
@@ -16,612 +18,298 @@ import java.util.*;
 
 class DogAopHelper {
 
-    private DogDb dogDb;
+    private static Logger logger = Logger.getLogger(DogAopHelper.class);
+
+    public ParameterType getParameterType() {
+        return parameterType;
+    }
+
+    private ParameterType parameterType;
+
+    private int parameterLength;
+
+    private OperationType operationType;
 
     private ProceedingJoinPoint pjp;
 
-    public DogAopHelper(ProceedingJoinPoint pjp, DogDb db) {
+    private Annotation[][] annotations;
 
-        this.dogDb = db;
+    private DogDb db;
 
-        this.pjp = pjp;
+    private int getMethodParameterLength(ParameterType parameterType, ProceedingJoinPoint joinPoint) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
-    }
+        if (parameterType.equals(ParameterType.NoParameter)) {
 
-
-    private List<Object> getFields(Object object) throws IllegalArgumentException, IllegalAccessException {
-
-        return  ReflectUtil.getFields(object,DogTable.class,QueryArg.class);
-
-    }
-
-    private List<List<Object>> getFieldsArray(Object object) throws IllegalArgumentException, IllegalAccessException {
-
-        List<List<Object>> argObjs = new ArrayList<>();
-
-        if (ReflectUtil.iterable(object)) {
-
-            Iterator iterator = ((Iterable) object).iterator();
-
-            while (iterator.hasNext()) {
-
-                argObjs.add(getFields(iterator.next()));
-
-            }
-        }
-
-        return argObjs;
-    }
-
-
-    private List<Object> getQueryArgInParamter(Object[] rawArgs) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-
-        List<Object> argObjs = new ArrayList<>();
-
-        Annotation[][] annotations = ReflectUtil.getParameterAnnotations(pjp);
-
-        for (int i = 0; i < rawArgs.length; i++) {
-
-            for (Annotation annotation : annotations[i]) {
-
-                if (annotation instanceof QueryArg) {
-
-                    argObjs.add(rawArgs[i]);
-
-                    break;
-                }
-            }
+            return 0;
 
         }
 
+        if (parameterType.equals(ParameterType.QueryArgs)) {
 
-        return argObjs;
-    }
+            int length = 0;
 
-    private Method getMethodWithArgSize(int argSize, List<Method> candidate) {
+            for (Annotation[] parameterAnnotations : annotations) {
 
-        for (Method method : candidate) {
+                for (Annotation annotation : parameterAnnotations) {
 
-            if (method.getParameterTypes().length == argSize) {
+                    if (annotation instanceof QueryArg) {
 
-                return method;
-            }
-        }
-
-        return null;
-    }
-
-
-
-    public Pair<MatchType,Pair<Method, Object[]>> getMethodAndArgObjects(String methodName) throws NoSuchFieldException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
-
-        List<Method> candidateQueryMethods = getCandidateMethods(methodName);
-
-        List<Object> rawArgs = getQueryArgs();
-
-        /**
-         * 无参情况
-         */
-        if (rawArgs.size() == 0) {
-
-            Method method = getMethodWithArgSize(0, candidateQueryMethods);
-
-            if (method != null) {
-
-                return new Pair<>(MatchType.NoArg,new Pair<>(method, new Object[]{}));
-
-            } else {
-
-                throw new NoSuchMethodException();
-            }
-
-        }
-
-
-        /**
-         * 直接通过ArgInParamter传递
-         */
-        List<Object> queryArgInParamter = getQueryArgInParamter(rawArgs.toArray());
-
-        if (queryArgInParamter.size() != 0) {
-
-            Method method = getMethodWithArgSize(queryArgInParamter.size(), candidateQueryMethods);
-
-            if (method != null) {
-
-                return new  Pair<>(MatchType.ArgInParamter,new Pair<>(method, queryArgInParamter.toArray()));
-
-            } else {
-
-                throw new NoSuchMethodException();
-            }
-
-        }
-
-
-        /**
-         * 获取 DogTable 中的参数
-         */
-        List<Object> queryArgsInDogTable = getFields(rawArgs.get(0));
-
-        if (queryArgsInDogTable.size() != 0) {
-
-            Method method = getMethodWithArgSize(queryArgsInDogTable.size(), candidateQueryMethods);
-
-            if (method != null) {
-
-                return new  Pair<>(MatchType.ArgInDogTable,new Pair<>(method, queryArgsInDogTable.toArray()));
-
-            } else {
-
-                throw new NoSuchMethodException();
-            }
-
-        }
-
-        /**
-         * 直接通过 Iterator 中的参数传递  -> 只支持一个Iterator参数
-         */
-        List<List<Object>> iterableObjects = getFieldsArray(rawArgs.get(0));
-
-        if (iterableObjects.size() == 0) {
-
-            throw new NoSuchMethodException();
-
-        } else {
-
-            /**
-             * queryArg 个数
-             */
-            int argNum = iterableObjects.get(0).size();
-
-            if (argNum == 0) {
-
-                throw new NoSuchMethodException();
-
-            } else {
-
-                /**
-                 * 找到个数相同的method
-                 */
-                Method method =  getMethodWithArgSize(argNum, candidateQueryMethods);
-
-                if(method == null){
-
-                    throw new NoSuchMethodException();
-
-                }else {
-
-                    Class<?>[] clazzs =   method.getParameterTypes();
-
-                    if(ReflectUtil.allIterable(clazzs)){
-
-                        List<List<Object>> ret = new ArrayList<>();
-
-                        for(int i=0;i<argNum;i++){
-
-                            ret.add(new ArrayList<Object>());
-                        }
-
-                        for(int j=0;j<iterableObjects.size();j++){
-
-                            for(int i=0;i<argNum;i++){
-
-                                ret.get(i).add(iterableObjects.get(j).get(i));
-
-                            }
-                        }
-
-                        return new Pair<>(MatchType.Iterator,new  Pair<>(method, ret.toArray()));
-                    }
-
-
-                    if(ReflectUtil.noneIterable(clazzs)){
-
-                        return new Pair<>(MatchType.IteratorMutiCall,new  Pair<>(method, iterableObjects.toArray()));
-                    }
-                }
-            }
-
-        }
-
-
-        throw new NoSuchMethodException();
-    }
-
-
-
-    public Map<TccLock,Object[]> getLocksInMutiIterator(Object objectArg)throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-
-        Map<TccLock,Object[]>  ret = new HashMap<>();
-
-        String dbName = dogDb.dbName();
-
-        String tableName = dogDb.tableName();
-
-        String idHeader = "";
-
-        Iterator iterator = ((Iterable)objectArg).iterator();
-
-        List<Field> fieldList = new ArrayList<>();
-
-        if(iterator.hasNext()){
-
-            Object object = iterator.next();
-
-            if (object.getClass().getAnnotation(DogTable.class) != null) {
-
-                for (Field field : object.getClass().getDeclaredFields()) {
-
-                    QueryArg queryarg = field.getAnnotation(QueryArg.class);
-
-                    if (queryarg != null) {
-
-                        field.setAccessible(true);
-
-                        fieldList.add(field);
-
-                        idHeader = idHeader + queryarg.argName();
+                        length++;
 
                     }
                 }
-            }
-
-        }
-
-
-        iterator = ((Iterable)objectArg).iterator();
-
-        while (iterator.hasNext()){
-
-            Object ob = iterator.next();
-
-            List<Object> retObjects = new ArrayList<>();
-
-            String values = "";
-
-            for(int j =0;j<fieldList.size();j++){
-
-                values = values + fieldList.get(j).get(ob).toString();
-
-                retObjects.add(fieldList.get(j).get(ob));
-            }
-
-
-            TccLock newLock = new TccLock(dbName+tableName+idHeader+values);
-
-            ret.put(newLock,retObjects.toArray());
-        }
-
-        return  ret;
-    };
-
-
-
-    public Map<TccLock,Object[]> getLocksInIterator(Object objectArg)throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-
-        Map<TccLock,Object[]>  ret = new HashMap<>();
-
-        String dbName = dogDb.dbName();
-
-        String tableName = dogDb.tableName();
-
-        String idHeader = "";
-
-        Iterator iterator = ((Iterable)objectArg).iterator();
-
-        List<Field> fieldList = new ArrayList<>();
-
-        if(iterator.hasNext()){
-
-            Object object = iterator.next();
-
-            if (object.getClass().getAnnotation(DogTable.class) != null) {
-
-                for (Field field : object.getClass().getDeclaredFields()) {
-
-                    QueryArg queryarg = field.getAnnotation(QueryArg.class);
-
-                    if (queryarg != null) {
-
-                        field.setAccessible(true);
-
-                        fieldList.add(field);
-
-                        idHeader = idHeader + queryarg.argName();
-
-                    }
-                }
-            }
-
-        }
-
-        iterator = ((Iterable)objectArg).iterator();
-
-        while (iterator.hasNext()){
-
-            Object ob = iterator.next();
-
-            String values = "";
-
-            for (Field field : fieldList) {
-
-                values = values + field.get(ob);
 
             }
 
-            TccLock newLock = new TccLock(dbName+tableName+idHeader+values);
-
-            ret.put(newLock,new Object[]{ob});
+            return length;
         }
 
-        return  ret;
-    };
 
+        if (parameterType.equals(ParameterType.OneDogTable)) {
 
-
-
-    public Map<TccLock,Object[]> getLocksInDogTable(Object object)throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-
-        Map<TccLock,Object[]>  ret = new HashMap<>();
-
-        String dbName = dogDb.dbName();
-
-        String tableName = dogDb.tableName();
-
-        String idHeader = "";
-
-        String values = "";
-
-        List<Object> argObjs = new ArrayList<>();
-
-        if (object.getClass().getAnnotation(DogTable.class) != null) {
-
-            DogTable dogTableAnnotation = object.getClass().getAnnotation(DogTable.class);
-
-            dbName = dogTableAnnotation.dbName();
-
-            tableName = dogTableAnnotation.tableName();
-
-            for (Field field : object.getClass().getDeclaredFields()) {
-
-                QueryArg queryarg = field.getAnnotation(QueryArg.class);
-
-                if (queryarg != null) {
-
-                    field.setAccessible(true);
-
-                    argObjs.add(field.get(object));
-
-                    idHeader = idHeader + queryarg.argName();
-
-                    values = values + field.get(object).toString();
-                }
-            }
+            return ReflectUtil.getFields(joinPoint.getArgs()[0], DogTable.class, QueryArg.class).size();
         }
 
-        TccLock tccLock = new TccLock(dbName + tableName + idHeader + values);
+        if (parameterType.equals(ParameterType.OneIterableOfDogTable)) {
 
-        ret.put(tccLock,argObjs.toArray());
+            Object object = ((Iterable) joinPoint.getArgs()[0]).iterator().next();
 
-        return  ret;
+            return ReflectUtil.getFields(object, DogTable.class, QueryArg.class).size();
+        }
+
+        return -1;
     }
-
-    public Map<TccLock,Object[]> getLocksInParams()throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-
-        Map<TccLock,Object[]>  ret = new HashMap<>();
-
-        Annotation[][] annotations =  ReflectUtil.getParameterAnnotations(pjp);
-
-        Object[] rawArgs = pjp.getArgs();
-
-        if (rawArgs.length == 0) {
-
-            return ret;
-        }
-
-        List<Object> objects = new ArrayList<>();
-
-        String dbName = dogDb.dbName();
-
-        String tableName = dogDb.tableName();
-
-        String idHeader = "";
-
-        String values = "";
-
-        for (int i = 0; i < rawArgs.length; i++) {
-
-            for (Annotation annotation : annotations[i]) {
-
-                if (annotation instanceof QueryArg) {
-
-                    objects.add(rawArgs[i]);
-
-                    idHeader = idHeader + ((QueryArg)annotation).argName();
-
-                    values = values + rawArgs[i].toString();
-
-                }
-            }
-
-        }
-
-        TccLock tccLock = new TccLock(dbName + tableName + idHeader + values);
-
-        ret.put(tccLock,objects.toArray());
-
-        return  ret;
-    }
-
-    public Map<TccLock, Object> getLocksDogTableOrListOfDogTable(Object object) throws IllegalAccessException {
-
-        Map<TccLock, Object> result = new HashMap<>();
-
-        if (object == null) {
-
-            return result;
-
-        }
-
-        String dbName = "";
-
-        String tableName = "";
-
-        String idHeader = "";
-
-        List<Field> queryfields = new ArrayList<>();
-
-        if (Iterable.class.isAssignableFrom(object.getClass())) {
-
-            Iterator iterator = ((Iterable) object).iterator();
-
-            if (iterator.hasNext()) {
-
-                Object obj = iterator.next();
-
-                DogTable dogTable = obj.getClass().getAnnotation(DogTable.class);
-
-                dbName = dogTable.dbName();
-
-                tableName = dogTable.tableName();
-
-                for (Field field : obj.getClass().getDeclaredFields()) {
-
-                    QueryArg queryarg = field.getAnnotation(QueryArg.class);
-
-                    if (queryarg != null) {
-
-                        idHeader = idHeader + queryarg.argName();
-
-                        field.setAccessible(true);
-
-                        queryfields.add(field);
-                    }
-                }
-            }
-
-            iterator = ((Iterable) object).iterator();
-
-            while (iterator.hasNext()) {
-
-                String values = "";
-
-                Object obj = iterator.next();
-
-                for (Field field : queryfields) {
-
-                    values = values + field.get(obj).toString();
-
-                }
-
-                TccLock tccLock = new TccLock(dbName + tableName + idHeader + values);
-
-                result.put(tccLock, obj);
-            }
-
-
-        } else {
-
-            DogTable dogTable = object.getClass().getAnnotation(DogTable.class);
-
-            dbName = dogTable.dbName();
-
-            tableName = dogTable.tableName();
-
-            for (Field field : object.getClass().getDeclaredFields()) {
-
-                QueryArg queryarg = field.getAnnotation(QueryArg.class);
-
-                if (queryarg != null) {
-
-                    idHeader = idHeader + queryarg.argName();
-
-                    field.setAccessible(true);
-
-                    queryfields.add(field);
-                }
-            }
-
-            String values = "";
-
-
-            for (Field field : queryfields) {
-
-                values = values + field.get(object).toString();
-
-            }
-
-            TccLock tccLock = new TccLock(dbName + tableName + idHeader + values);
-
-            result.put(tccLock, object);
-
-        }
-
-        return result;
-    }
-
 
     /**
-     * 一个参数只支持 DogTable 和 Iterator 两种，或者是单个被QueryArg标注的方法
+     * 优先级 QueryArg > DogTable> Iterable DogTable
+     * @param joinPoint
      * @return
      * @throws NoSuchFieldException
      * @throws IllegalArgumentException
      * @throws IllegalAccessException
      */
-    public List<Object> getQueryArgs() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+    private ParameterType getParameterType(ProceedingJoinPoint joinPoint) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
-        List<Object> result = new ArrayList<>();
-
-        Annotation[][] annotations = ReflectUtil.getParameterAnnotations(pjp);
-
-        Object[] args = pjp.getArgs();
+        Object[] args = joinPoint.getArgs();
 
         if (args.length == 0) {
 
-            return result;
-
-        } else if (args.length == 1) {
-
-            Object firstObj = args[0];
-
-            if (Iterable.class.isAssignableFrom(firstObj.getClass())) {
-
-                result.add(firstObj);
-            }
-
-            if (firstObj.getClass().getAnnotation(DogTable.class) != null) {
-
-                result.add(firstObj);
-
-                return result;
-
-            }
+            return ParameterType.NoParameter;
 
         }
 
-        for (int i = 0; i < annotations.length; i++) {
+        for (Annotation[] parameterAnnotations : annotations) {
 
-            for (int j = 0; j < annotations[i].length; j++) {
+            for (Annotation annotation : parameterAnnotations) {
 
-                if (annotations[i][j] instanceof QueryArg) {
+                if (annotation instanceof QueryArg) {
 
-                    result.add(pjp.getArgs()[i]);
+                    return ParameterType.QueryArgs;
 
                 }
             }
 
         }
 
-        return result;
+        if (args.length == 1) {
+
+            Object firstParameter = args[0];
+
+            if (firstParameter.getClass().getAnnotation(DogTable.class) != null) {
+
+                return ParameterType.OneDogTable;
+
+            }
+
+            if (ReflectUtil.iterable(firstParameter)) {
+
+                Iterator iterator = ((Iterable) firstParameter).iterator();
+
+                if (iterator.hasNext()) {
+
+                    Object obj = iterator.next();
+
+                    if (obj.getClass().getAnnotation(DogTable.class) != null) {
+
+                        return ParameterType.OneIterableOfDogTable;
+
+                    }
+
+                }
+
+                return ParameterType.OneEmptyIterable;
+            }
+
+        }
+
+        throw new IllegalArgumentException();
+    }
+
+    public Method getMethod() throws NoSuchMethodException, IllegalArgumentException {
+
+        Class<?> clazz = db.repositoryClass();
+
+        String methodName = "";
+
+        if (db.operationType().equals(OperationType.INSERTNEWDATA)) {
+
+            methodName = db.deleteMethodName();
+
+        } else if (db.operationType().equals(OperationType.UPDATEDATA)) {
+
+            methodName = db.queryMethodName();
+        }
+
+        if (!parameterType.equals(ParameterType.OneEmptyIterable)) {
+
+            List<Method> methods = ReflectUtil.getMethods(clazz, methodName, parameterLength);
+
+            if (methods.size() == 0) {
+
+                throw new NoSuchMethodException(methodName);
+
+            } else {
+
+                return methods.get(0);
+            }
+
+        }
+
+        return null;
+    }
+
+    public DogAopHelper(ProceedingJoinPoint pjp, DogDb db) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+
+
+        annotations = ReflectUtil.getParameterAnnotations(pjp);
+
+        parameterType = getParameterType(pjp);
+
+        operationType = db.operationType();
+
+        parameterLength = getMethodParameterLength(parameterType, pjp);
+
+
+        this.db = db;
+
+        this.pjp = pjp;
+
+        logger.info("parameterType:" + parameterType + "   parameterLength:" + parameterLength + " operationType:" + operationType);
+
     }
 
 
-    public List<Method> getCandidateMethods(String methodName) throws SecurityException {
+    DataLoader getDataLoader() throws IllegalArgumentException {
 
-        Class<?> clazz = dogDb.queryClass();
+        /**
+         * (queryMethod == null)  无需查询 || (ParameterType.NoParameter) 无参数更新不锁 || (ParameterType.OneEmptyIterable) 更新的时候是空数组
+         */
+        if (parameterType.equals(ParameterType.NoParameter) || parameterType.equals(ParameterType.OneEmptyIterable)) {
+            return new DataLoader() {
+                @Override
+                public Iterator<Pair<TccLock, List<Object>>> iterator() {
+                    return new ArrayList<Pair<TccLock, List<Object>>>().iterator();
+                }
+            };
+        }
 
-        return ReflectUtil.getMethods(clazz,methodName);
+        if (parameterType.equals(ParameterType.QueryArgs)) {
+
+            return new DataLoader() {
+                @Override
+                public Iterator<Pair<TccLock, List<Object>>> iterator() {
+
+                    ArrayList<Pair<TccLock, List<Object>>> arrayList = new ArrayList<>();
+
+                    Pair<List<QueryArg>, List<Object>> queryArg = ReflectUtil.<QueryArg>getAnnotationedParameter(pjp.getArgs(), annotations, QueryArg.class);
+
+                    TccLock tccLock = new DBLockBuilder().setDogDb(db).
+                            setQueryArgs(queryArg.getKey()).build(queryArg.getValue());
+
+                    arrayList.add(new Pair<>(tccLock, queryArg.getValue()));
+
+                    return arrayList.iterator();
+
+                }
+            };
+
+        }
+
+        if (parameterType.equals(ParameterType.OneDogTable)) {
+
+            return new DataLoader() {
+                @Override
+                public Iterator<Pair<TccLock, List<Object>>> iterator() {
+
+                    ArrayList<Pair<TccLock, List<Object>>> arrayList = new ArrayList<>();
+
+                    try {
+
+                        DogTable dogTable = pjp.getArgs()[0].getClass().getAnnotation(DogTable.class);
+
+                        Pair<List<QueryArg>, List<Field>> fields = ReflectUtil.<QueryArg>getAnnotationedFields(pjp.getArgs()[0].getClass(), QueryArg.class);
+
+                        List<Object> objects = ReflectUtil.getFieldsValues(pjp.getArgs()[0], fields.getValue());
+
+                        TccLock tccLock = new DBLockBuilder().setDogDb(db).setDogTable(dogTable).
+                                setQueryArgs(fields.getKey()).build(objects);
+
+                        arrayList.add(new Pair<>(tccLock, objects));
+
+                    } catch (Exception e) {
+
+
+                    }
+
+                    return arrayList.iterator();
+
+                }
+            };
+
+        }
+
+        if (parameterType.equals(ParameterType.OneIterableOfDogTable)) {
+
+            return new DataLoader() {
+                @Override
+                public Iterator<Pair<TccLock, List<Object>>> iterator() {
+
+                    ArrayList<Pair<TccLock, List<Object>>> arrayList = new ArrayList<>();
+
+                    try {
+
+                        Object firstObj = ((Iterable) pjp.getArgs()[0]).iterator().next();
+
+                        DogTable dogTable = firstObj.getClass().getAnnotation(DogTable.class);
+
+                        Pair<List<QueryArg>, List<Field>> fields = ReflectUtil.<QueryArg>getAnnotationedFields(firstObj.getClass(), QueryArg.class);
+
+                        Iterator iterator = ((Iterable) pjp.getArgs()[0]).iterator();
+
+                        while (iterator.hasNext()) {
+
+                            List<Object> objects = ReflectUtil.getFieldsValues(iterator.next(), fields.getValue());
+
+                            TccLock tccLock = new DBLockBuilder().setDogDb(db).setDogTable(dogTable).
+                                    setQueryArgs(fields.getKey()).build(objects);
+
+                            arrayList.add(new Pair<>(tccLock, objects));
+
+                        }
+
+                    } catch (Exception e) {
+
+                    }
+
+                    return arrayList.iterator();
+                }
+            };
+
+        }
+
+
+        throw new IllegalArgumentException();
     }
 
 }
+

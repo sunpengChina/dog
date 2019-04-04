@@ -8,12 +8,19 @@ import java.lang.reflect.Method;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface DogDb {
+
     String dbName() default  "";
+
     String tableName() default "";
-    Class<?> queryClass() ;
+
+    Class<?> repositoryClass() ;
+
     String queryMethodName() ;
+
     String deleteMethodName() default "";
-    Class<?>[] argClass() default {};
+
     String saveMethodName();
-    OperationType type() default  OperationType.UPDATEDATA;
+
+    OperationType operationType() default  OperationType.UPDATEDATA;
+
 }

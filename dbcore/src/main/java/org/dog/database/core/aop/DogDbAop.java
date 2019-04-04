@@ -1,5 +1,6 @@
 package org.dog.database.core.aop;
 
+import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -10,18 +11,21 @@ import org.dog.core.util.Pair;
 import org.dog.core.util.ThreadManager;
 import org.dog.database.core.ClazzInfo;
 import org.dog.database.core.annotation.DogDb;
-import org.dog.database.core.annotation.MatchType;
 import org.dog.database.core.annotation.OperationType;
 import org.dog.database.core.buffer.IDataBuffer;
+import org.dog.database.core.util.ReflectUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.*;
 
 @Component
 @Aspect
 public class DogDbAop {
+
+    private static Logger logger = Logger.getLogger(DogDbAop.class);
 
     @Autowired
     ITccServer iTccServer;
@@ -30,15 +34,22 @@ public class DogDbAop {
     IDataBuffer buffer;
 
 
-    private boolean updateData(DogDb db){
+    private void saveLockersInContext(DogDb db, Set<TccLock> newLocks) {
 
-        return  ThreadManager.exsit() && db.type().equals(OperationType.UPDATEDATA);
+        Map<Object, Object> context = ThreadManager.getTccContext().getContext();
 
-    }
+        ClazzInfo clazzInfo = ClazzInfo.createClazzInfo(db);
 
-    private boolean insertData(DogDb db){
+        if (context.containsKey(clazzInfo)) {
 
-        return  ThreadManager.exsit() && db.type().equals(OperationType.INSERTNEWDATA);
+            Set<TccLock> values = (Set<TccLock>) context.get(clazzInfo);
+
+            values.addAll(newLocks);
+
+        } else {
+
+            context.put(clazzInfo, newLocks);
+        }
 
     }
 
@@ -49,67 +60,59 @@ public class DogDbAop {
 
         DogAopHelper aopHelper = new DogAopHelper(pjp, db);
 
+        Object repositoryObj = ApplicationUtil.getApplicationContext().getBean(db.repositoryClass());
+
+        OperationType operationType = db.operationType();
+
+        DataLoader factory = aopHelper.getDataLoader();
+
+        Iterator<Pair<TccLock, List<Object>>> iterator = factory.iterator();
+
+        Method method = aopHelper.getMethod();
+
+        if(method!=null) {
+
+            logger.info("repository methodName: " + method.getName());
+
+        }
+
+        /**
+         *key:锁  value:被锁的行数据;  目前不支持method 方法的返回值为 Iterable;
+         */
+        Map<TccLock, Object> lockedData = new HashMap<>();
+
         try {
 
-            /**
-             * 在事务中的更新
-             */
-            if (ThreadManager.exsit() && db.type().equals(OperationType.UPDATEDATA)) {
+            if (ThreadManager.exsit() && operationType.equals(OperationType.UPDATEDATA)) {
 
-                Map<TccLock, Object> locks = new HashMap<>();
+                if (method != null) {
 
-                Pair<MatchType,Pair<Method, Object[]>>  methodAndObjs = aopHelper.getMethodAndArgObjects(db.queryMethodName());
+                    if(Iterable.class.isAssignableFrom(method.getReturnType())){
 
-                Pair<Method, Object[]> query = methodAndObjs.getValue();
-
-                Object queryObj = ApplicationUtil.getApplicationContext().getBean(db.queryClass());
-
-                if (!methodAndObjs.getKey().equals(MatchType.IteratorMutiCall)) {
-
-                    query.getKey().setAccessible(true);
-
-                    Object queryData = query.getKey().invoke(queryObj, query.getValue());
-
-                    if (queryData!=null && java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
-
-                        if (((Optional) queryData).isPresent()) {
-
-                            locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(((java.util.Optional) queryData).get()));
-
-                        }
-
-                    } else {
-
-                        if (queryData != null) {
-
-                            locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(queryData));
-                        }
+                        throw  new UnsupportedOperationException(method.getName());
                     }
 
-                } else {
+                    while (iterator.hasNext()) {
 
-                    Object[] subArgDatas = (Object[]) query.getValue();
+                        Pair<TccLock, List<Object>> values = iterator.next();
 
-                    for(Object oneArg:subArgDatas){
+                        Object queryData = method.invoke(repositoryObj, values.getValue().toArray());
 
-                        query.getKey().setAccessible(true);
+                        if (queryData!=null) {
 
-                        Object queryData = query.getKey().invoke(queryObj,((List)oneArg).toArray());
+                            if(java.util.Optional.class.isAssignableFrom(queryData.getClass())){
 
-                        if (queryData!=null && java.util.Optional.class.isAssignableFrom(queryData.getClass())) {
+                                if(((Optional)queryData).isPresent()){
 
-                            if (((Optional) queryData).isPresent()) {
+                                    lockedData.put(values.getKey(), ((Optional)queryData).get());
 
-                                locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(((java.util.Optional) queryData).get()));
+                                }
 
+                            }else {
+
+                                lockedData.put(values.getKey(), queryData);
                             }
 
-                        } else {
-
-                            if (queryData != null) {
-
-                                locks.putAll(aopHelper.getLocksDogTableOrListOfDogTable(queryData));
-                            }
                         }
 
                     }
@@ -117,87 +120,38 @@ public class DogDbAop {
                 }
 
 
-                Set<TccLock> tobufferlocks = iTccServer.lock(locks.keySet());
+            } else if (ThreadManager.exsit() && operationType.equals(OperationType.INSERTNEWDATA)) {
 
-                for (TccLock lock : tobufferlocks) {
+                if (method != null) {
 
-                    buffer.buffData(lock, locks.get(lock));
+                    while (iterator.hasNext()) {
+
+                        Pair<TccLock, List<Object>> values = iterator.next();
+
+                        lockedData.put(values.getKey(), values.getValue().toArray());
+
+                    }
+
                 }
-
-                Map<Object, Object> context = ThreadManager.getTccContext().getContext();
-
-                ClazzInfo clazzInfo  = new ClazzInfo(db.queryClass(), db.saveMethodName(),OperationType.UPDATEDATA);
-
-                if (context.containsKey(clazzInfo)) {
-
-                    Set<TccLock> values = (Set<TccLock>) context.get(clazzInfo);
-
-                    values.addAll(tobufferlocks);
-
-
-                } else {
-
-                    context.put(clazzInfo, tobufferlocks);
-                }
-
             }
 
-            /**
-             * 在事务中的插入
-             */
-            if (ThreadManager.exsit() && db.type().equals(OperationType.INSERTNEWDATA)) {
+            if (lockedData.size() != 0) {
 
-                Map<Object, Object> context = ThreadManager.getTccContext().getContext();
+                Set<TccLock> newLocks = iTccServer.lock(lockedData.keySet());
 
-                ClazzInfo clazzInfo =   new ClazzInfo(db.queryClass(),db.deleteMethodName(),OperationType.INSERTNEWDATA);
+                for (TccLock lock : newLocks) {
 
-                Map<TccLock, Object> locks = new HashMap<>();
+                    logger.info("Locks: " + lock.getKey());
 
-                Pair<MatchType,Pair<Method, Object[]>>  methodAndObjs = aopHelper.getMethodAndArgObjects(db.deleteMethodName());
-
-                if(methodAndObjs.getKey().equals(MatchType.ArgInParamter)){
-
-                    locks.putAll(aopHelper.getLocksInParams());
+                    buffer.buffData(lock, (lockedData.get(lock)));
 
                 }
 
-                if(methodAndObjs.getKey().equals(MatchType.ArgInDogTable)){
-
-                    locks.putAll(aopHelper.getLocksInDogTable(pjp.getArgs()[0]));
-
-                }
-
-                if(methodAndObjs.getKey().equals(MatchType.Iterator)){
-
-                      locks.putAll(aopHelper.getLocksInIterator((pjp.getArgs()[0])));
-                }
-
-                if(methodAndObjs.getKey().equals(MatchType.IteratorMutiCall)){
-
-                    locks.putAll(aopHelper.getLocksInMutiIterator((pjp.getArgs()[0])));
-                }
-
-                Set<TccLock> tobufferlocks = iTccServer.lock(locks.keySet());
-
-                for (TccLock lock : tobufferlocks) {
-
-                    buffer.buffData(lock, locks.get(lock));
-                }
-
-                if (context.containsKey(clazzInfo)) {
-
-                    Set<TccLock> values = (Set<TccLock>) context.get(clazzInfo);
-
-                    values.addAll(tobufferlocks);
-
-                } else {
-
-                    context.put(clazzInfo, tobufferlocks);
-                }
-
+                saveLockersInContext(db, newLocks);
             }
 
             result = pjp.proceed();
+
 
         } catch (Exception e) {
 

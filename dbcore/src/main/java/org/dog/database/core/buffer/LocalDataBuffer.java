@@ -1,7 +1,9 @@
 package org.dog.database.core.buffer;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.dog.core.entry.TccLock;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,9 +12,9 @@ public class LocalDataBuffer implements IDataBuffer {
     private Map<TccLock,Object> buff = new HashMap<>();
 
     @Override
-    public void buffData(TccLock lock,Object object) {
+    public void buffData(TccLock lock, Object object) {
 
-        buff.putIfAbsent(lock,object);
+        buff.putIfAbsent(lock, SerializationUtils.deserialize(SerializationUtils.serialize((Serializable) object)));
 
     }
 
