@@ -2,7 +2,7 @@ package org.dog.core.event;
 
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
-import org.dog.core.util.Pair;
+import org.dog.core.common.Pair;
 
 
 import java.util.List;

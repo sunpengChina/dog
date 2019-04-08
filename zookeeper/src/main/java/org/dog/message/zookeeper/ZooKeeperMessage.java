@@ -8,10 +8,10 @@ import org.dog.core.event.CallNodeOfflineEvent;
 import org.dog.core.event.TccAchievementEvent;
 import org.dog.core.event.TccNodeOfflineEvent;
 import org.dog.core.event.TccTryAchievementEvent;
-import org.dog.core.jms.AsynchronousBroker;
+import org.dog.core.jms.ICallNode;
+import org.dog.core.jms.ITccNode;
 import org.dog.core.jms.exception.ConnectException;
-import org.dog.core.jms.IBroker;
-import org.dog.core.jms.exception.NotStartTransactionException;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -19,14 +19,13 @@ import org.dog.core.listener.CallNodeOfflineListener;
 import org.dog.core.listener.TccAchievementListener;
 import org.dog.core.listener.TccNodeOfflineListener;
 import org.dog.core.listener.TccTryAchievementListener;
-import org.dog.core.util.Pair;
+import org.dog.core.common.Pair;
 import org.dog.message.zookeeper.util.PathHelper;
 import org.dog.message.zookeeper.watcher.TccTryWatcher;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -35,9 +34,9 @@ import java.util.concurrent.TimeUnit;
 import static org.dog.message.zookeeper.util.ZkHelp.throwException;
 
 @Component
-public class ZooKeeperMessage extends SimultaneousMessage implements AsynchronousBroker {
+public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, ITccNode {
 
-    protected ScheduledExecutorService scheduledExecutorService = null;
+    protected ScheduledExecutorService scheduledExecutorService  = new ScheduledThreadPoolExecutor(2);;
 
     private static Logger logger = Logger.getLogger(ZooKeeperMessage.class);
 
@@ -48,7 +47,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements Asynchronou
     }
 
     @Override
-    public void watchTccTryAchievement(DogTcc transaction, TccTryAchievementListener listener) throws ConnectException, InterruptedException {
+    public void addTryAchievementListener(DogTcc transaction, TccTryAchievementListener listener) throws ConnectException, InterruptedException {
 
 
         try {
@@ -77,21 +76,14 @@ public class ZooKeeperMessage extends SimultaneousMessage implements Asynchronou
     }
 
     @Override
-    public void watchOffline(TccNodeOfflineListener tccNodeOfflineListener, CallNodeOfflineListener callNodeOfflineListener) throws ConnectException, InterruptedException {
+    public void addCallOfflineListener(CallNodeOfflineListener callNodeOfflineListener) throws ConnectException, InterruptedException {
 
-        if (scheduledExecutorService == null) {
-
-            scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
 
             scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
 
                     try {
-
-
-                        watchTccOffline(tccNodeOfflineListener);
-
 
                         List<String> applications = getConnection().getChildren(pathHelper.zookeeperWorkPath(), false);
 
@@ -141,7 +133,34 @@ public class ZooKeeperMessage extends SimultaneousMessage implements Asynchronou
                 }
             }, zoolkeepconfig.getInitialdeplay(), zoolkeepconfig.getRecoveryperiod(), TimeUnit.SECONDS);
 
-        }
+
+
+    }
+
+    @Override
+    public void addTccOfflineListner(TccNodeOfflineListener tccNodeOfflineListener) throws ConnectException, InterruptedException {
+
+            scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+
+                @Override
+                public void run() {
+
+                    try {
+
+                        watchTccOffline(tccNodeOfflineListener);
+
+                    } catch (Exception e) {
+
+                        logger.error(e);
+
+                        return;
+
+                    }
+
+                    logger.info("恢复线程结束");
+
+                }
+            }, zoolkeepconfig.getInitialdeplay(), zoolkeepconfig.getRecoveryperiod(), TimeUnit.SECONDS);
 
     }
 
@@ -271,14 +290,14 @@ public class ZooKeeperMessage extends SimultaneousMessage implements Asynchronou
     }
 
     @Override
-    public void watchCallsConfirm(DogTcc transaction, TccAchievementListener listener) throws ConnectException, InterruptedException, NotStartTransactionException {
+    public void addTccAchievementListener(DogTcc transaction, TccAchievementListener listener) throws ConnectException, InterruptedException{
 
         watchCallsConfirm(transaction, listener, false);
 
     }
 
 
-    private void watchCallsConfirm(DogTcc transaction, TccAchievementListener listener, boolean reentry) throws ConnectException, InterruptedException, NotStartTransactionException {
+    private void watchCallsConfirm(DogTcc transaction, TccAchievementListener listener, boolean reentry) throws ConnectException, InterruptedException{
 
 
         String path = pathHelper.tccNodesPath(transaction);
@@ -403,7 +422,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements Asynchronou
 
 
     public void close() throws IOException {
-
 
         scheduledExecutorService.shutdown();
 

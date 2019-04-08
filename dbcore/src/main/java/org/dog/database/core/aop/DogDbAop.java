@@ -4,20 +4,18 @@ import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.dog.core.common.ApplicationUtil;
+import org.dog.core.jms.ILockPool;
+import org.dog.core.util.ApplicationUtil;
 import org.dog.core.entry.TccLock;
-import org.dog.core.tccserver.ITccServer;
-import org.dog.core.util.Pair;
-import org.dog.core.util.ThreadManager;
+import org.dog.core.common.Pair;
+import org.dog.core.common.ThreadManager;
 import org.dog.database.core.ClazzInfo;
 import org.dog.database.core.annotation.DogDb;
 import org.dog.database.core.annotation.OperationType;
 import org.dog.database.core.buffer.IDataBuffer;
-import org.dog.database.core.util.ReflectUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -28,15 +26,14 @@ public class DogDbAop {
     private static Logger logger = Logger.getLogger(DogDbAop.class);
 
     @Autowired
-    ITccServer iTccServer;
+    ILockPool iLockPool;
 
     @Autowired
     IDataBuffer buffer;
 
-
     private void saveLockersInContext(DogDb db, Set<TccLock> newLocks) {
 
-        Map<Object, Object> context = ThreadManager.getTccContext().getContext();
+        Map<Object, Object> context = ThreadManager.getContext().getContext();
 
         ClazzInfo clazzInfo = ClazzInfo.createClazzInfo(db);
 
@@ -83,7 +80,7 @@ public class DogDbAop {
 
         try {
 
-            if (ThreadManager.exsit() && operationType.equals(OperationType.UPDATEDATA)) {
+            if (ThreadManager.inTcc() && operationType.equals(OperationType.UPDATEDATA)) {
 
                 if (method != null) {
 
@@ -120,7 +117,7 @@ public class DogDbAop {
                 }
 
 
-            } else if (ThreadManager.exsit() && operationType.equals(OperationType.INSERTNEWDATA)) {
+            } else if (ThreadManager.inTcc() && operationType.equals(OperationType.INSERTNEWDATA)) {
 
                 if (method != null) {
 
@@ -137,7 +134,7 @@ public class DogDbAop {
 
             if (lockedData.size() != 0) {
 
-                Set<TccLock> newLocks = iTccServer.lock(lockedData.keySet());
+                Set<TccLock>   newLocks = iLockPool.lock(ThreadManager.currentTcc(),ThreadManager.currentCall(),lockedData.keySet());
 
                 for (TccLock lock : newLocks) {
 

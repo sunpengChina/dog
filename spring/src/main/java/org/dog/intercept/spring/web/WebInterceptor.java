@@ -1,7 +1,7 @@
 package org.dog.intercept.spring.web;
 
 import org.dog.core.entry.DogTcc;
-import org.dog.core.util.ThreadManager;
+import org.dog.core.common.ThreadManager;
 import org.apache.log4j.Logger;
 import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -50,7 +50,7 @@ public class WebInterceptor implements HandlerInterceptor {
         /**
          * 清理线程
          */
-        ThreadManager.clearTransaction();
+        ThreadManager.clearTcc();
 
         DogTcc transaction = getTransaction(request);
 
@@ -61,7 +61,7 @@ public class WebInterceptor implements HandlerInterceptor {
 
             setInTransaction(true);
 
-            ThreadManager.setTransaction(transaction);
+            ThreadManager.setTcc(transaction);
 
             logger.info("事务性调用："+ transaction.toString());
 
@@ -87,7 +87,7 @@ public class WebInterceptor implements HandlerInterceptor {
         /**
          * 清理线程
          */
-        ThreadManager.clearTransaction();
+        ThreadManager.clearTcc();
 
     }
 

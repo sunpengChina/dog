@@ -1,16 +1,16 @@
 package org.dog.database.core;
 
 import org.apache.log4j.Logger;
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.dog.core.annotation.TccHandler;
-import org.dog.core.common.ApplicationUtil;
-import org.dog.core.common.LockPool;
+import org.dog.core.util.ApplicationUtil;
+
 import org.dog.core.entry.DogCall;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.TccContext;
 import org.dog.core.entry.TccLock;
 import org.dog.database.core.annotation.OperationType;
 import org.dog.database.core.buffer.IDataBuffer;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -28,23 +28,11 @@ public class DbTccHandler extends TccHandler {
     private IDataBuffer dataBuffer;
 
     @Override
-    public void exceptionHandler(ProceedingJoinPoint pjp, DogTcc tcc, DogCall call, Exception e) throws Exception {
-        super.exceptionHandler(pjp, tcc, call, e);
+    public void exceptionHandler(  DogTcc tcc, DogCall call, Exception e) throws Exception {
+        super.exceptionHandler(  tcc, call, e);
     }
 
 
-    private Method getMethod(Class<?> clazz, String methodName) throws NoSuchMethodException {
-
-        for (Method method : clazz.getMethods()) {
-
-            if (method.getName().equals(methodName)) {
-
-                return method;
-
-            }
-        }
-        throw new NoSuchMethodException(methodName);
-    }
 
 
     @Override
@@ -119,7 +107,7 @@ public class DbTccHandler extends TccHandler {
     }
 
     @Override
-    public void preTryHandler(ProceedingJoinPoint pjp, DogTcc tcc, DogCall call, LockPool lockPool) {
-        super.preTryHandler(pjp, tcc, call, lockPool);
+    public void before( DogTcc tcc, DogCall call ) {
+        super.before(  tcc, call );
     }
 }

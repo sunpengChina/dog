@@ -2,7 +2,7 @@ package org.dog.intercept.spring.application;
 
 import org.dog.core.jms.exception.ConnectException;
 import org.dog.core.jms.exception.NonexistException;
-import org.dog.core.tccserver.ITccServer;
+import org.dog.core.common.IServer;
 import org.apache.log4j.Logger;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -26,7 +26,7 @@ public class ApplicationStartListener implements ApplicationListener<ContextRefr
 
             firstEvent = false;
 
-            ITccServer center =  event.getApplicationContext().getBean(ITccServer.class);
+            IServer center =  event.getApplicationContext().getBean(IServer.class);
 
             try {
 

@@ -5,7 +5,7 @@ import org.dog.core.common.Connectable;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.jms.exception.ConnectException;
 import org.dog.core.jms.exception.NonexistException;
-import org.dog.core.jms.exception.NotStartTransactionException;
+
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.*;
 import org.dog.message.zookeeper.connection.ConnectionPool;
@@ -19,7 +19,6 @@ import static org.dog.message.zookeeper.util.ZkHelp.throwException;
 
 
 public class ConnectableMessage implements Connectable, Closeable {
-
 
     private static Logger logger = Logger.getLogger(ConnectableMessage.class);
 
@@ -51,11 +50,11 @@ public class ConnectableMessage implements Connectable, Closeable {
     }
 
 
-    protected void checkIfTransactionStarter(DogTcc transaction) throws NotStartTransactionException {
+    protected void checkIfTransactionStarter(DogTcc transaction) throws  ConnectException{
 
         if(!transaction.getApplication().equals(applicationName)){
 
-            throw  new NotStartTransactionException();
+            throw  new ConnectException("");
         }
 
     }

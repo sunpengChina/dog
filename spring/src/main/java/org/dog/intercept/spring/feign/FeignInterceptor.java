@@ -1,7 +1,7 @@
 package org.dog.intercept.spring.feign;
 
 import org.dog.core.entry.DogTcc;
-import org.dog.core.util.ThreadManager;
+import org.dog.core.common.ThreadManager;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import org.apache.log4j.Logger;
@@ -19,7 +19,7 @@ public class FeignInterceptor implements RequestInterceptor {
         /**
          *   获取线程中的事务传递给下一个服务
          */
-        DogTcc transaction = ThreadManager.getTransaction();
+        DogTcc transaction = ThreadManager.currentTcc();
 
         /**
          *   若无事务说明非事务性远程调用

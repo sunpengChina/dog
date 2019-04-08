@@ -1,9 +1,7 @@
 package org.dog.database.core.util;
 
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.dog.core.util.Pair;
-import org.dog.database.core.annotation.DogTable;
-import org.dog.database.core.annotation.QueryArg;
+import org.dog.core.common.Pair;
 import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 

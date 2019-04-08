@@ -5,14 +5,14 @@ import org.apache.zookeeper.data.Stat;
 import org.dog.core.entry.*;
 import org.dog.core.jms.exception.ConnectException;
 import org.dog.core.jms.exception.NonexistException;
-import org.dog.core.jms.exception.NotStartTransactionException;
+
 import org.dog.core.jms.IBroker;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
-import org.dog.core.util.IBytePackConvert;
-import org.dog.core.util.ThreadManager;
+import org.dog.core.common.IBytePackConvert;
+import org.dog.core.common.ThreadManager;
 import org.dog.message.zookeeper.util.ZkHelp;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -76,7 +76,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public synchronized void confirmTry(DogTcc tcc) throws NotStartTransactionException,ConnectException ,InterruptedException{
+    public synchronized void confirmTry(DogTcc tcc) throws  ConnectException ,InterruptedException{
 
         checkIfTransactionStarter(tcc);
 
@@ -96,7 +96,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public synchronized void cancelTry(DogTcc tcc) throws NotStartTransactionException,ConnectException ,InterruptedException{
+    public synchronized void cancelTry(DogTcc tcc) throws  ConnectException ,InterruptedException{
 
         checkIfTransactionStarter(tcc);
 
@@ -117,7 +117,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     }
 
     @Override
-    public synchronized void setCallContext(DogTcc tcc, DogCall call, TccContext context) throws ConnectException, NonexistException, InterruptedException {
+    public synchronized void setContext(DogTcc tcc, DogCall call, TccContext context) throws ConnectException, NonexistException, InterruptedException {
 
         ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(tcc,applicationName),false,null);
 
@@ -144,7 +144,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         Set<TccLock> newlocks = new HashSet<>();
 
-        TccContext oldContext = ThreadManager.getTccContext();
+        TccContext oldContext = ThreadManager.getContext();
 
         List<Op> ops = new ArrayList<Op>();
 

@@ -3,13 +3,12 @@ package org.dog.core.aop;
 import org.dog.core.ApplicationAutoConfig;
 import org.dog.core.annotation.DogCallAnnotation;
 import org.dog.core.annotation.ITccHandler;
-import org.dog.core.common.ApplicationUtil;
+import org.dog.core.util.ApplicationUtil;
 import org.dog.core.entry.TccContext;
 import org.dog.core.entry.DogTcc;
 import org.dog.core.entry.DogCall;
-import org.dog.core.tccserver.ITccServer;
-import org.dog.core.util.Pair;
-import org.dog.core.util.ThreadManager;
+import org.dog.core.common.Pair;
+import org.dog.core.common.ThreadManager;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -19,19 +18,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-import static org.dog.core.util.ThreadManager.clearCallAndContext;
-
-
 @Component
 @Aspect
 public class DogCallAop{
 
+    private static Logger logger = Logger.getLogger(DogCallAop.class);
 
     @Autowired
     ApplicationAutoConfig config;
-
-
-    private static Logger logger = Logger.getLogger(DogCallAop.class);
 
     @Autowired
     ITccServer server;
@@ -55,7 +49,7 @@ public class DogCallAop{
         try {
 
 
-            transaction = ThreadManager.getTransaction();
+            transaction = ThreadManager.currentTcc();
 
             /**
              * 说明在事务里面执行
@@ -71,7 +65,7 @@ public class DogCallAop{
                  */
                 TccContext tccContext = new TccContext(ad.TccHandlerClass().getName(),pjp.getArgs());
 
-                ThreadManager.setCallAndContext(new Pair<DogCall,TccContext>(localcaller,tccContext));
+                ThreadManager.setCall(new Pair<DogCall,TccContext>(localcaller,tccContext));
 
                 /**
                  * 注册call
@@ -83,9 +77,8 @@ public class DogCallAop{
 
                 tccHandler =  (ITccHandler) ApplicationUtil.getApplicationContext().getBean(tccHandlerClass);
 
-                tccHandler.preTryHandler(pjp,transaction,localcaller,server);
+                tccHandler.before( transaction,localcaller);
 
-                server.setCallContext(transaction,localcaller,tccContext);
 
             }else{
 
@@ -100,13 +93,13 @@ public class DogCallAop{
             /*
             清理call的上下文
              */
-            clearCallAndContext();
+            ThreadManager.clearCall();
 
         } catch (Exception e) {
 
             if(tccHandler !=null) {
 
-                tccHandler.exceptionHandler(pjp, transaction, localcaller,e);
+                tccHandler.exceptionHandler(  transaction, localcaller,e);
             }
 
             logger.error("本地调用失败:"+e);

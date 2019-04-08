@@ -3,8 +3,7 @@ package org.dog.core.aop;
 import org.dog.core.annotation.DogTccAnnotation;
 import org.dog.core.ApplicationAutoConfig;
 import org.dog.core.entry.DogTcc;
-import org.dog.core.tccserver.ITccServer;
-import org.dog.core.util.ThreadManager;
+import org.dog.core.common.ThreadManager;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -33,8 +32,7 @@ public class DogTccAop {
 
         String tccName = (ad.Name().equals("") ? pjp.getSignature().toString().replace('.','_').replace(',','_').replace(' ','_').replace('(','_').replace(')','_'):ad.Name());
 
-
-        if(ThreadManager.exsit()){
+        if(ThreadManager.inTcc()){
 
             return  pjp.proceed();
 
@@ -45,7 +43,7 @@ public class DogTccAop {
 
             logger.info("createTransaction:"+transaction.toString());
 
-            ThreadManager.setTransaction(transaction);
+            ThreadManager.setTcc(transaction);
 
             return  server.tccTry(transaction,pjp);
 

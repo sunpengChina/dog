@@ -5,7 +5,6 @@ import org.dog.database.core.annotation.DogDb;
 import org.dog.database.core.annotation.DogTable;
 import org.dog.database.core.annotation.QueryArg;
 
-import java.io.Serializable;
 import java.util.List;
 
 

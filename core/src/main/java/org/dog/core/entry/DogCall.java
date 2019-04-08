@@ -2,14 +2,25 @@ package org.dog.core.entry;
 
 import java.io.Serializable;
 
+
 public class DogCall implements Serializable {
 
     @Override
     public int hashCode() {
 
-        String hashStr =   key + name;
+        return (UUID + applicationName).hashCode();
+    }
 
-        return hashStr.hashCode();
+    public String getApplicationName() {
+        return applicationName;
+    }
+
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
+    }
+
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
     }
 
     @Override
@@ -19,7 +30,7 @@ public class DogCall implements Serializable {
 
             DogCall other= (DogCall) obj;
 
-            return name.equals(other.name)&& key.equals(other.key);
+            return   applicationName.equals(other.applicationName) && UUID.equals(other.UUID);
 
         }
 
@@ -29,53 +40,25 @@ public class DogCall implements Serializable {
 
     @Override
     public String toString() {
-        return "[LocalServer:    Name:"+name+"   key:"+key+"   status:"+serverStatus+"]";
+        return "[LocalServer:    Name:"+ UUID +"   applicationName:" + applicationName;
     }
 
-    private String key;
+    private String applicationName;
 
-    private String name;
+    private String UUID;
 
-    private DogCallStatus serverStatus;
 
-    public DogCallStatus getServerStatus() {
-        return serverStatus;
-    }
-
-    public void setServerStatus(DogCallStatus serverStatus) {
-        this.serverStatus = serverStatus;
+    public DogCall(String uuid, String applicationName) {
+        this.UUID = uuid.replace("-","");
+        this.applicationName = applicationName;
     }
 
 
-//    public DogCall(String Name) {
-//        this.Name = Name;
-//        this.key = String.valueOf(this.hashCode());
-//        this.serverStatus = DogCallStatus.TRY;
-//
-//    }
-
-    public DogCall(String name, String key) {
-        this.name = name ;
-        this.key = key;
-        this.serverStatus = DogCallStatus.TRY;
+    public String getUUID() {
+        return UUID;
     }
 
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
 
 
 }

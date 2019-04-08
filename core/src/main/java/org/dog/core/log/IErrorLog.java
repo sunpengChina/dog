@@ -11,5 +11,4 @@ public interface IErrorLog {
 
     void  cancelError(DogTcc dogTran, DogCall call, TccContext context);
 
-
 }

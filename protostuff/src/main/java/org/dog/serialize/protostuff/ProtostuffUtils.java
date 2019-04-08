@@ -1,7 +1,7 @@
 package org.dog.serialize.protostuff;
 
 import org.dog.core.entry.TccContext;
-import org.dog.core.util.IBytePackConvert;
+import org.dog.core.common.IBytePackConvert;
 import io.protostuff.LinkedBuffer;
 import io.protostuff.ProtostuffIOUtil;
 import io.protostuff.Schema;

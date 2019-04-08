@@ -3,8 +3,7 @@ package org.dog.database.core.aop;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.dog.core.entry.TccLock;
-import org.dog.core.tccserver.TccServer;
-import org.dog.core.util.Pair;
+import org.dog.core.common.Pair;
 import org.dog.database.core.annotation.DogDb;
 import org.dog.database.core.annotation.DogTable;
 import org.dog.database.core.annotation.OperationType;
@@ -36,7 +35,7 @@ class DogAopHelper {
 
     private DogDb db;
 
-    private int getMethodParameterLength(ParameterType parameterType, ProceedingJoinPoint joinPoint) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+    private int getMethodParameterLength(ParameterType parameterType, ProceedingJoinPoint joinPoint) throws  IllegalArgumentException, IllegalAccessException {
 
         if (parameterType.equals(ParameterType.NoParameter)) {
 

@@ -117,7 +117,7 @@ public class PathHelper {
 
         String subApplicationContent = subApplicationPath(transaction,applicationName);
 
-        return linkPath(subApplicationContent, server.getName());
+        return linkPath(subApplicationContent, server.getUUID());
 
     }
 
