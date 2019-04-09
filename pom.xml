@@ -17,15 +17,13 @@
         <spring-cloud.version>Greenwich.RELEASE</spring-cloud.version>
     </properties>
 
-    <groupId>org.dog</groupId>
+    <groupId>top.dogtcc</groupId>
     <artifactId>tcc</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
 
     <modules>
-
-
         <module>spring</module>
         <module>zookeeper</module>
         <module>core</module>
