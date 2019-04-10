@@ -16,7 +16,10 @@ import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -99,6 +102,24 @@ class TccServer implements ITccServer {
 
     @Override
     public void connect() throws ConnectException, NonexistException, InterruptedException {
+
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+
+        try {
+
+//            ObjectName adapterName = new ObjectName("HelloAgent:name=htmladapter,port=8082");
+//
+//              HtmlAdaptorServer adapter = new HtmlAdaptorServer();
+
+//            server.registerMBean(adapter, adapterName);
+//
+//            adapter.start();
+
+        }catch (Exception e){
+
+        }
+
+
 
         this.message.connect();
 

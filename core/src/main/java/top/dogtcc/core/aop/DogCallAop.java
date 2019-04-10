@@ -34,9 +34,11 @@ public class DogCallAop{
     @Around("@annotation(top.dogtcc.core.annotation.DogCallAnnotation)  && @annotation(ad) ")
     public Object doAroundtransaction(ProceedingJoinPoint pjp, DogCallAnnotation ad) throws Throwable {
 
-        String callName = (ad.Name().equals("")? pjp.getSignature().toString().replace('.','_').replace(',','_').replace(' ','_').replace('(','_').replace(')','_'):ad.Name());
+        String callName = (ad.Name().equals("")? pjp.getSignature().toString().replace('.','_').
+                replace(',','_').replace(' ','_').
+                replace('(','_').replace(')','_'):ad.Name());
 
-        callName = callName + UUID.randomUUID().toString().replace("-","");
+
 
         Object result = null;
 
@@ -58,7 +60,9 @@ public class DogCallAop{
 
                 logger.info("本地事务调用："+transaction.toString()+": callname:"+callName);
 
-                localcaller = new DogCall(callName,config.getApplicationname());
+                localcaller = new DogCall(callName+UUID.randomUUID().toString(),config.getApplicationname());
+
+
 
                 /**
                  * 事务上下文

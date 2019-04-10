@@ -5,6 +5,8 @@ import java.io.Serializable;
 
 public class DogCall implements Serializable {
 
+
+
     @Override
     public int hashCode() {
 
@@ -40,7 +42,7 @@ public class DogCall implements Serializable {
 
     @Override
     public String toString() {
-        return "[LocalServer:    Name:"+ UUID +"   applicationName:" + applicationName;
+        return "[LocalServer:    UUID:"+ UUID +"   applicationName:" + applicationName;
     }
 
     private String applicationName;

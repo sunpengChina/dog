@@ -237,11 +237,11 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                 String subApplicationPath = PathHelper.linkPath(nodesPath, applicationName);
 
-                List<String> callNames = null;
+                List<String> calluuids = null;
 
                 try {
 
-                    callNames = getConnection().getChildren(subApplicationPath, false);
+                    calluuids = getConnection().getChildren(subApplicationPath, false);
 
                 } catch (Exception e) {
 
@@ -250,9 +250,9 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                 List<Pair<DogCall, byte[]>> dogCalls = new ArrayList<>();
 
-                for (String callName : callNames) {
+                for (String uuid : calluuids) {
 
-                    String callPath = PathHelper.linkPath(subApplicationPath, callName);
+                    String callPath = PathHelper.linkPath(subApplicationPath, uuid);
 
                     try {
 
@@ -263,7 +263,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
                         continue;
                     }
 
-                    DogCall call = new DogCall(callName,applicationName);
+                    DogCall call = new DogCall(uuid,applicationName);
 
                     byte[] data = getConnection().getData(callPath, false, new Stat());
 
