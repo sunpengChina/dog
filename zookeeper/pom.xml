@@ -2,31 +2,40 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <licenses>
+        <license>
+            <name>The LGPL-3.0 License</name>
+            <url>https://opensource.org/licenses/LGPL-3.0</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/sunpengChina/dog</url>
+        <connection>https://github.com/sunpengChina/dog</connection>
+        <developerConnection>https://github.com/sunpengChina/dog</developerConnection>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>sunpeng</name>
+            <email>sunpengchina85@gmail.com</email>
+            <url>https://github.com/sunpengChina/dog</url>
+        </developer>
+    </developers>
     <parent>
         <groupId>top.dogtcc</groupId>
         <artifactId>tcc</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
+
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>top.dogtcc.message</groupId>
     <artifactId>zookeeper</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-
-
-    <build>
-    <plugins>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.18.1</version>
-            <configuration>
-                <skipTests>true</skipTests>
-            </configuration>
-        </plugin>
-    </plugins>
-    </build>
 
 
     <dependencies>
@@ -53,34 +62,6 @@
         </dependency>
     </dependencies>
 
-
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-
-    <repositories>
-        <repository>
-            <id>spring-releases</id>
-            <url>https://repo.spring.io/libs-release</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>spring-releases</id>
-            <url>https://repo.spring.io/libs-release</url>
-        </pluginRepository>
-    </pluginRepositories>
 
 
 </project>
