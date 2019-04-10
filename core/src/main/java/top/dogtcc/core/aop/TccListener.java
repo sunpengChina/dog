@@ -3,12 +3,11 @@ package top.dogtcc.core.aop;
 import top.dogtcc.core.annotation.ITccHandler;
 import top.dogtcc.core.common.ContextBuffer;
 import top.dogtcc.core.event.*;
-import top.dogtcc.core.util.ApplicationUtil;
+import top.dogtcc.core.util.SpringContextUtil;
 import top.dogtcc.core.entry.TccContext;
 import top.dogtcc.core.entry.DogCall;
 import top.dogtcc.core.entry.DogTcc;
 import top.dogtcc.core.entry.DogTccStatus;
-import top.dogtcc.core.event.*;
 import top.dogtcc.core.jms.exception.ConnectException;
 import top.dogtcc.core.jms.exception.NonexistException;
 import top.dogtcc.core.listener.ITccListener;
@@ -169,7 +168,7 @@ class TccListener implements ITccListener {
 
                     Class<?> rollbackClass  = Class.forName(context.getClassName());
 
-                    ITccHandler rollback =  (ITccHandler) ApplicationUtil.getApplicationContext().getBean(rollbackClass);
+                    ITccHandler rollback =  (ITccHandler) SpringContextUtil.getApplicationContext().getBean(rollbackClass);
 
                     if (tran.isSuccess()) {
 

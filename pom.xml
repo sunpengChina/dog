@@ -31,6 +31,7 @@
         <module>dbcore</module>
         <module>springmongo</module>
         <module>springjpa</module>
+        <module>common</module>
     </modules>
 
 

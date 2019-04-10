@@ -1,9 +1,12 @@
 package top.dogtcc.database.core.util;
 
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.springframework.aop.framework.AdvisedSupport;
+import org.springframework.aop.framework.AopProxy;
 import top.dogtcc.core.common.Pair;
 import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
+import top.dogtcc.core.util.SpringContextUtil;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -212,5 +215,51 @@ public class ReflectUtil {
 
         return filteredMethods;
     }
+
+
+
+
+
+    private static Object getCglibProxyTargetObject(Object proxy) throws Exception {
+        Field h = proxy.getClass().getDeclaredField("CGLIB$CALLBACK_0");
+        h.setAccessible(true);
+        Object dynamicAdvisedInterceptor = h.get(proxy);
+
+        Field advised = dynamicAdvisedInterceptor.getClass().getDeclaredField("advised");
+        advised.setAccessible(true);
+
+        Object target = ((AdvisedSupport)advised.get(dynamicAdvisedInterceptor)).getTargetSource().getTarget();
+
+        return target;
+    }
+
+
+    private static Object getJdkDynamicProxyTargetObject(Object proxy) throws Exception {
+        Field h = proxy.getClass().getSuperclass().getDeclaredField("h");
+        h.setAccessible(true);
+        AopProxy aopProxy = (AopProxy) h.get(proxy);
+
+        Field advised = aopProxy.getClass().getDeclaredField("advised");
+        advised.setAccessible(true);
+
+        Object target = ((AdvisedSupport)advised.get(aopProxy)).getTargetSource().getTarget();
+
+        return target;
+    }
+
+
+    public static Object getTarget(ProceedingJoinPoint pjp )throws  ClassNotFoundException{
+
+       return SpringContextUtil.getApplicationContext().getBean(Class.forName(pjp.getThis().getClass().getName().split("\\$")[0]));
+
+    }
+
+
+    public static Class<?> getTargetClass(ProceedingJoinPoint pjp )throws  ClassNotFoundException{
+
+        return  Class.forName(pjp.getThis().getClass().getName().split("\\$")[0]);
+
+    }
+
 
 }

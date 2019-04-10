@@ -3,7 +3,7 @@ package top.dogtcc.core.aop;
 import top.dogtcc.core.ApplicationAutoConfig;
 import top.dogtcc.core.annotation.DogCallAnnotation;
 import top.dogtcc.core.annotation.ITccHandler;
-import top.dogtcc.core.util.ApplicationUtil;
+import top.dogtcc.core.util.SpringContextUtil;
 import top.dogtcc.core.entry.TccContext;
 import top.dogtcc.core.entry.DogTcc;
 import top.dogtcc.core.entry.DogCall;
@@ -75,7 +75,7 @@ public class DogCallAop{
                 // 调用逻辑前的操作
                 Class<?> tccHandlerClass  = Class.forName(tccContext.getClassName());
 
-                tccHandler =  (ITccHandler) ApplicationUtil.getApplicationContext().getBean(tccHandlerClass);
+                tccHandler =  (ITccHandler) SpringContextUtil.getApplicationContext().getBean(tccHandlerClass);
 
                 tccHandler.before( transaction,localcaller);
 

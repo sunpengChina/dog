@@ -64,15 +64,15 @@ public class ClazzInfo implements Serializable {
     }
 
 
-    public static ClazzInfo createClazzInfo(DogDb dogDb){
+    public static ClazzInfo createClazzInfo(DogDb dogDb,Class<?> clazz){
 
         if(dogDb.operationType().equals(OperationType.UPDATEDATA)){
 
-            return  new ClazzInfo(dogDb.repositoryClass(),dogDb.saveMethodName(),dogDb.operationType());
+            return  new ClazzInfo(clazz,dogDb.saveMethodName(),dogDb.operationType());
 
         }else {
 
-            return  new ClazzInfo(dogDb.repositoryClass(),dogDb.deleteMethodName(),dogDb.operationType());
+            return  new ClazzInfo(clazz,dogDb.deleteMethodName(),dogDb.operationType());
 
         }
     }
@@ -83,9 +83,30 @@ public class ClazzInfo implements Serializable {
         this.operationType = operationType;
     }
 
-    public Method method()throws NoSuchMethodException {
+    public Method method(Object proxy)throws NoSuchMethodException {
 
-        return  ReflectUtil.getMethod(clazz,methodString);
+        Method method = ReflectUtil.getMethod(clazz,methodString);
+
+        for (Method proxyMethod: proxy.getClass().getMethods()){
+
+            if(proxyMethod.getReturnType().equals(method.getReturnType())){
+
+                if(proxyMethod.getName().equals(this.methodString)){
+
+                    if(proxyMethod.getParameterCount() == method.getParameterCount()){
+
+                        return  proxyMethod;
+
+                    }
+
+                }
+
+            }
+        }
+
+
+        throw   new NoSuchMethodException("methodString");
+
     }
 
 

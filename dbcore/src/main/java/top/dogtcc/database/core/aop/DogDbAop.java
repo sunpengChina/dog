@@ -5,7 +5,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import top.dogtcc.core.jms.ILockPool;
-import top.dogtcc.core.util.ApplicationUtil;
 import top.dogtcc.core.entry.TccLock;
 import top.dogtcc.core.common.Pair;
 import top.dogtcc.core.common.ThreadManager;
@@ -15,6 +14,7 @@ import top.dogtcc.database.core.annotation.OperationType;
 import top.dogtcc.database.core.buffer.IDataBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import top.dogtcc.database.core.util.ReflectUtil;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -31,11 +31,11 @@ public class DogDbAop {
     @Autowired
     IDataBuffer buffer;
 
-    private void saveLockersInContext(DogDb db, Set<TccLock> newLocks) {
+    private void saveLockersInContext(DogDb db, Set<TccLock> newLocks,Class<?> clazz) {
 
         Map<Object, Object> context = ThreadManager.getContext().getContext();
 
-        ClazzInfo clazzInfo = ClazzInfo.createClazzInfo(db);
+        ClazzInfo clazzInfo = ClazzInfo.createClazzInfo(db,clazz);
 
         if (context.containsKey(clazzInfo)) {
 
@@ -55,9 +55,11 @@ public class DogDbAop {
 
         Object result = null;
 
-        DogAopHelper aopHelper = new DogAopHelper(pjp, db);
 
-        Object repositoryObj = ApplicationUtil.getApplicationContext().getBean(db.repositoryClass());
+
+        DogAopHelper aopHelper = new DogAopHelper(pjp, db, ReflectUtil.getTargetClass(pjp));
+
+                //ApplicationUtil.getApplicationContext().getBean(db.repositoryClass());
 
         OperationType operationType = db.operationType();
 
@@ -93,7 +95,7 @@ public class DogDbAop {
 
                         Pair<TccLock, List<Object>> values = iterator.next();
 
-                        Object queryData = method.invoke(repositoryObj, values.getValue().toArray());
+                        Object queryData = method.invoke(ReflectUtil.getTarget(pjp), values.getValue().toArray());
 
                         if (queryData!=null) {
 
@@ -144,7 +146,7 @@ public class DogDbAop {
 
                 }
 
-                saveLockersInContext(db, newLocks);
+                saveLockersInContext(db, newLocks,ReflectUtil.getTargetClass(pjp));
             }
 
             result = pjp.proceed();

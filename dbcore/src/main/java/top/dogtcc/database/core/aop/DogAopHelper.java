@@ -35,6 +35,8 @@ class DogAopHelper {
 
     private DogDb db;
 
+    private Class<?> clazz;
+
     private int getMethodParameterLength(ParameterType parameterType, ProceedingJoinPoint joinPoint) throws  IllegalArgumentException, IllegalAccessException {
 
         if (parameterType.equals(ParameterType.NoParameter)) {
@@ -146,8 +148,6 @@ class DogAopHelper {
 
     public Method getMethod() throws NoSuchMethodException, IllegalArgumentException {
 
-        Class<?> clazz = db.repositoryClass();
-
         String methodName = "";
 
         if (db.operationType().equals(OperationType.INSERTNEWDATA)) {
@@ -177,7 +177,7 @@ class DogAopHelper {
         return null;
     }
 
-    public DogAopHelper(ProceedingJoinPoint pjp, DogDb db) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+    public DogAopHelper(ProceedingJoinPoint pjp, DogDb db,Class<?> clazz) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
 
         annotations = ReflectUtil.getParameterAnnotations(pjp);
@@ -192,6 +192,8 @@ class DogAopHelper {
         this.db = db;
 
         this.pjp = pjp;
+
+        this.clazz = clazz;
 
         logger.info("parameterType:" + parameterType + "   parameterLength:" + parameterLength + " operationType:" + operationType);
 

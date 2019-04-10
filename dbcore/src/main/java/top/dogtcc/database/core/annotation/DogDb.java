@@ -12,8 +12,6 @@ public @interface DogDb {
 
     String tableName() default "";
 
-    Class<?> repositoryClass() ;
-
     String queryMethodName() ;
 
     String deleteMethodName() default "";

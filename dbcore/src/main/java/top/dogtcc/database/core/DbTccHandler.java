@@ -2,7 +2,7 @@ package top.dogtcc.database.core;
 
 import org.apache.log4j.Logger;
 import top.dogtcc.core.annotation.TccHandler;
-import top.dogtcc.core.util.ApplicationUtil;
+import top.dogtcc.core.util.SpringContextUtil;
 
 import top.dogtcc.core.entry.DogCall;
 import top.dogtcc.core.entry.DogTcc;
@@ -21,7 +21,7 @@ public class DbTccHandler extends TccHandler {
 
     public DbTccHandler() {
 
-        dataBuffer = ApplicationUtil.getApplicationContext().getBean(IDataBuffer.class);
+        dataBuffer = SpringContextUtil.getApplicationContext().getBean(IDataBuffer.class);
     }
 
     private IDataBuffer dataBuffer;
@@ -47,11 +47,11 @@ public class DbTccHandler extends TccHandler {
 
                 ClazzInfo clazzInfo = (ClazzInfo) values.getKey();
 
-                Object repositoryBean = ApplicationUtil.getApplicationContext().getBean(clazzInfo.getClazz());
+                Object repositoryBean = SpringContextUtil.getApplicationContext().getBean(clazzInfo.getClazz());
 
                 Set<TccLock> tccLocks = (Set<TccLock>) values.getValue();
 
-                Method method = clazzInfo.method();
+                Method method = clazzInfo.method(repositoryBean);
 
                 /**
                  * 必然有缓存的锁
