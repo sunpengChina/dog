@@ -1,5 +1,6 @@
 package top.dogtcc.core.entry;
 
+import java.beans.ConstructorProperties;
 import java.io.Serializable;
 
 public class DogTcc implements Serializable {
@@ -80,6 +81,7 @@ public class DogTcc implements Serializable {
         this.key = String.valueOf(super.hashCode());
         this.status = DogTccStatus.TRY;
     }
+
 
     public DogTcc(String application, String name, String key) {
         this.application = application;

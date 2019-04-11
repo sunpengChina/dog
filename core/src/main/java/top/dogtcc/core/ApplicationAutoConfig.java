@@ -1,7 +1,7 @@
 package top.dogtcc.core;
 
-import top.dogtcc.core.log.DefaultErrorLog;
-import top.dogtcc.core.log.DefaultHistoryLog;
+import top.dogtcc.core.log.AbstractErrorLog;
+import top.dogtcc.core.log.AbstractHistoryLog;
 import top.dogtcc.core.log.IErrorLog;
 import top.dogtcc.core.log.IHistoryLog;
 import top.dogtcc.core.common.DefaultBytePackConvert;
@@ -29,7 +29,7 @@ public class ApplicationAutoConfig {
     @Bean
     @ConditionalOnMissingBean(IHistoryLog.class)
     public IHistoryLog historyLog() {
-        return new DefaultHistoryLog();
+        return new AbstractHistoryLog(){};
     }
 
     @Bean
@@ -41,7 +41,7 @@ public class ApplicationAutoConfig {
     @Bean
     @ConditionalOnMissingBean(IErrorLog.class)
     public IErrorLog errorLog(){
-        return  new DefaultErrorLog();
+        return  new AbstractErrorLog() {};
     }
 
 

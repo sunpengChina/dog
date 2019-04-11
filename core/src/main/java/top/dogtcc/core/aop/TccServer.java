@@ -4,6 +4,7 @@ import top.dogtcc.core.ApplicationAutoConfig;
 import top.dogtcc.core.entry.TccContext;
 import top.dogtcc.core.entry.DogCall;
 import top.dogtcc.core.entry.DogTcc;
+import top.dogtcc.core.jmx.TccServerMXBean;
 import top.dogtcc.core.listener.ITccListener;
 import top.dogtcc.core.log.IErrorLog;
 import top.dogtcc.core.jms.exception.ConnectException;
@@ -16,15 +17,14 @@ import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-class TccServer implements ITccServer {
+class TccServer implements TccServerMXBean,ITccServer {
 
     private static Logger logger = Logger.getLogger(TccServer.class);
 
@@ -51,13 +51,14 @@ class TccServer implements ITccServer {
     }
 
 
-
     @Override
     public Object tccTry(DogTcc tran, ProceedingJoinPoint point) throws Throwable {
 
-        message.registerTcc(tran);
+        tccNum ++;
 
         try {
+
+            message.registerTcc(tran);
 
             logger.info("TCC远程调用:" + tran);
 
@@ -70,6 +71,10 @@ class TccServer implements ITccServer {
             return result;
 
         } catch (Throwable e) {
+
+            logfails(tran);
+
+            tccErrorNum ++ ;
 
             logger.info("TCC报错:" + tran);
 
@@ -90,6 +95,8 @@ class TccServer implements ITccServer {
     @Override
     public void tccCall(DogTcc transaction, DogCall call, TccContext context) throws ConnectException, NonexistException, InterruptedException {
 
+        callNum ++ ;
+
         message.registerCall(transaction, call, context);
 
         contextBuffer.put(transaction, call, context);
@@ -102,24 +109,6 @@ class TccServer implements ITccServer {
 
     @Override
     public void connect() throws ConnectException, NonexistException, InterruptedException {
-
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-
-        try {
-
-//            ObjectName adapterName = new ObjectName("HelloAgent:name=htmladapter,port=8082");
-//
-//              HtmlAdaptorServer adapter = new HtmlAdaptorServer();
-
-//            server.registerMBean(adapter, adapterName);
-//
-//            adapter.start();
-
-        }catch (Exception e){
-
-        }
-
-
 
         this.message.connect();
 
@@ -140,4 +129,46 @@ class TccServer implements ITccServer {
     }
 
 
+    private long tccNum = 0 ;
+
+    private long callNum = 0;
+
+    private long tccErrorNum = 0;
+
+    private List<DogTcc> faillist = new ArrayList<>();
+
+
+    private  void logfails(DogTcc failTcc){
+
+        if(faillist.size() == 1024){
+
+            faillist.clear();
+
+        }
+
+        faillist.add(failTcc);
+    }
+
+
+    @Override
+    public List<DogTcc> failsTcc() {
+
+        return faillist;
+    }
+
+
+    @Override
+    public long getTccNum() {
+        return tccNum;
+    }
+
+    @Override
+    public long getCallNum() {
+        return callNum;
+    }
+
+    @Override
+    public long getTccErrorNum() {
+        return tccErrorNum;
+    }
 }
