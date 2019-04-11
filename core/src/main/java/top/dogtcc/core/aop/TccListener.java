@@ -3,6 +3,8 @@ package top.dogtcc.core.aop;
 import top.dogtcc.core.annotation.ITccHandler;
 import top.dogtcc.core.common.ContextBuffer;
 import top.dogtcc.core.event.*;
+import top.dogtcc.core.jmx.Error;
+import top.dogtcc.core.jmx.ErrorLogMXBean;
 import top.dogtcc.core.util.SpringContextUtil;
 import top.dogtcc.core.entry.TccContext;
 import top.dogtcc.core.entry.DogCall;
@@ -20,10 +22,18 @@ import org.apache.log4j.Logger;
 import top.dogtcc.core.common.Pair;
 import top.dogtcc.core.event.TccAchievementEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-class TccListener implements ITccListener {
+class TccListener implements ErrorLogMXBean,ITccListener {
+
+    List<Error> fails  = new ArrayList<>();
+
+    @Override
+    public List<Error> fails() {
+        return fails;
+    }
 
     private static Logger logger = Logger.getLogger(TccListener.class);
 
@@ -175,6 +185,22 @@ class TccListener implements ITccListener {
                         rollback.confirm(context,tran,call);
 
                     } else {
+
+
+                        if(fails.size() == 1024){
+
+                            fails.clear();
+
+                        }
+
+                        String errorString = "";
+
+                        for(Object arg :context.getArgs()){
+
+                            errorString = errorString +arg.getClass().getName()+"  "+arg.toString() + "  ";
+                        }
+
+                        fails.add(new Error(tran,call,context.getLockList(),errorString));
 
                         rollback.cancel(context,tran,call);
                     }

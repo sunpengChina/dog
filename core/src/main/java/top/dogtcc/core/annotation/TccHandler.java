@@ -30,12 +30,12 @@ public abstract class TccHandler implements ITccHandler{
 
     @Override
     public void cancel(TccContext context, DogTcc tcc, DogCall call) {
-        logger.info("cancel");
+        logger.info("cancel"+ tcc.toString());
     }
 
     @Override
     public void confirm(TccContext context, DogTcc tcc, DogCall call) {
-        logger.info("confirm");
+        logger.info("confirm"+ tcc.toString());
     }
 
     @Override

@@ -36,16 +36,29 @@ public class DogTccAop {
 
             return  pjp.proceed();
 
-
         }else{
 
-            DogTcc transaction = new DogTcc(applicationAutoConfig.getApplicationname(),tccName);
+            try {
 
-            logger.info("createTransaction:"+transaction.toString());
+                DogTcc transaction = new DogTcc(applicationAutoConfig.getApplicationname(),tccName);
 
-            ThreadManager.setTcc(transaction);
+                logger.info("createTransaction:"+transaction.toString());
 
-            return  server.tccTry(transaction,pjp);
+                ThreadManager.setTcc(transaction);
+
+                Object object = server.tccTry(transaction,pjp);
+
+                return  object;
+
+            }catch (Exception e){
+
+                throw  e;
+
+            }finally {
+
+                ThreadManager.clearTcc();
+            }
+
 
         }
     }

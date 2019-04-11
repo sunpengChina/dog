@@ -116,7 +116,7 @@ public abstract class DogJpaRepository<T, ID> implements JpaRepository<T,ID> {
      */
     public <S extends T> S create(S s) {
 
-        S ret  = repository().save(s);
+        S ret  = repository().saveAndFlush(s);
 
         DogJpaRepository<T, ID> self = ( DogJpaRepository<T, ID>) SpringContextUtil.getApplicationContext().getBean(this.getClass());
 

@@ -17,7 +17,10 @@ import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -47,6 +50,19 @@ class TccServer implements TccServerMXBean,ITccServer {
         this.rollbackExecutor = Executors.newCachedThreadPool();
 
         listener = new TccListener(iMessage, convert, errorLog, contextBuffer, historylog, rollbackExecutor);
+
+        try {
+
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+
+            ObjectName name = new ObjectName("top.dogtcc.core.aop:type=ITccListener");
+
+            mbs.registerMBean(listener, name);
+
+        }catch (Exception e){
+
+            logger.error(e);
+        }
 
     }
 

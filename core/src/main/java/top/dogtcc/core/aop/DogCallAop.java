@@ -94,10 +94,6 @@ public class DogCallAop{
              */
             result = pjp.proceed();
 
-            /*
-            清理call的上下文
-             */
-            ThreadManager.clearCall();
 
         } catch (Exception e) {
 
@@ -112,7 +108,10 @@ public class DogCallAop{
 
         } finally {
 
-
+            /*
+            清理call的上下文
+             */
+            ThreadManager.clearCall();
         }
 
         return result;

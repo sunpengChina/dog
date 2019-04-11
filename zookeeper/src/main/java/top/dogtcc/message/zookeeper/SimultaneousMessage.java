@@ -174,6 +174,8 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
                 ops.add(Op.create(pathHelper.lockerPath(lock.getKey()),transaction.getUnique().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
+                logger.info(pathHelper.lockerPath(lock.getKey()));
+
                 logger.info("Lock:"+lock.getKey());
 
             }else {
@@ -193,6 +195,8 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         ops.add(Op.setData(pathHelper.callPath(transaction,applicationName,call),convert.objectToByteArray(oldContext),AnyVersion));
 
+        logger.info(pathHelper.callPath(transaction,applicationName,call));
+
         try {
 
             getConnection().multi(ops);
@@ -210,6 +214,8 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
     public synchronized void registerCall(DogTcc transaction, DogCall call, TccContext context) throws ConnectException,InterruptedException ,NonexistException {
 
         ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(transaction,applicationName),true,null);
+
+        logger.info(pathHelper.subApplicationPath(transaction,applicationName));
 
         List<Op> ops = new ArrayList<Op>();
 
@@ -254,7 +260,11 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         ops.add(Op.create(pathHelper.callPath(transaction,applicationName,call),convert.objectToByteArray(context),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
+        logger.info(pathHelper.callPath(transaction,applicationName,call));
+
         ops.add(Op.create(pathHelper.callMonitorPath(transaction,applicationName,call),null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
+
+        logger.info(pathHelper.callMonitorPath(transaction,applicationName,call));
 
         try {
 
@@ -264,7 +274,7 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         }catch (Exception e){
 
-            logger.error(transaction +" " +"Start Call:" + call +" error");
+            logger.error(transaction +" " +"Start Call:" + call +" error" +  e);
 
             throw  new ConnectException();
         }

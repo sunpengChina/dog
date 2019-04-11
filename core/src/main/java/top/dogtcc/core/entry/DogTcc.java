@@ -2,6 +2,7 @@ package top.dogtcc.core.entry;
 
 import java.beans.ConstructorProperties;
 import java.io.Serializable;
+import java.util.UUID;
 
 public class DogTcc implements Serializable {
 
@@ -78,7 +79,7 @@ public class DogTcc implements Serializable {
     public DogTcc(String application, String name) {
         this.application = application;
         this.name = name;
-        this.key = String.valueOf(super.hashCode());
+        this.key = UUID.randomUUID().toString();
         this.status = DogTccStatus.TRY;
     }
 
