@@ -26,14 +26,14 @@
     <parent>
         <groupId>top.dogtcc</groupId>
         <artifactId>tcc</artifactId>
-        <version>1.0-RELEASE</version>
+        <version>1.0.1-RELEASE</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>top.dogtcc.database.spring</groupId>
     <artifactId>jpa</artifactId>
-    <version>1.0-RELEASE</version>
+    <version>1.0.1-RELEASE</version>
 
 
 
@@ -46,12 +46,12 @@
         <dependency>
             <groupId>top.dogtcc.database</groupId>
             <artifactId>core</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>top.dogtcc</groupId>
             <artifactId>core</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.data</groupId>

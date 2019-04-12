@@ -28,7 +28,7 @@
     <parent>
         <groupId>top.dogtcc</groupId>
         <artifactId>tcc</artifactId>
-        <version>1.0-RELEASE</version>
+        <version>1.0.1-RELEASE</version>
     </parent>
 
 
@@ -37,7 +37,7 @@
 
     <groupId>top.dogtcc.database</groupId>
     <artifactId>core</artifactId>
-    <version>1.0-RELEASE</version>
+    <version>1.0.1-RELEASE</version>
 
 
 
@@ -45,7 +45,7 @@
         <dependency>
             <groupId>top.dogtcc</groupId>
             <artifactId>core</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.data</groupId>

@@ -6,13 +6,13 @@
     <parent>
         <groupId>top.dogtcc</groupId>
         <artifactId>tcc</artifactId>
-        <version>1.0-RELEASE</version>
+        <version>1.0.1-RELEASE</version>
     </parent>
 
 
     <groupId>top.dogtcc.test</groupId>
     <artifactId>OrderServer</artifactId>
-    <version>1.0-RELEASE</version>
+    <version>1.0.1-RELEASE</version>
 
     <properties>
         <java.version>1.8</java.version>
@@ -23,19 +23,19 @@
         <dependency>
             <groupId>top.dogtcc</groupId>
             <artifactId>common</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
 
         <dependency>
             <groupId>top.dogtcc.</groupId>
             <artifactId>common</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
 
         <dependency>
             <groupId>top.dogtcc.database.spring</groupId>
             <artifactId>jpa</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
 
 

@@ -29,14 +29,14 @@
     <parent>
         <groupId>top.dogtcc</groupId>
         <artifactId>tcc</artifactId>
-        <version>1.0-RELEASE</version>
+        <version>1.0.1-RELEASE</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>top.dogtcc</groupId>
     <artifactId>common</artifactId>
-    <version>1.0-RELEASE</version>
+    <version>1.0.1-RELEASE</version>
     <packaging>jar</packaging>
 
 
@@ -44,27 +44,27 @@
         <dependency>
             <groupId>top.dogtcc</groupId>
             <artifactId>core</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>top.dogtcc.database</groupId>
             <artifactId>core</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>top.dogtcc.serialize</groupId>
             <artifactId>protostuff</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>top.dogtcc.message</groupId>
             <artifactId>zookeeper</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>top.dogtcc.intercept</groupId>
             <artifactId>spring</artifactId>
-            <version>1.0-RELEASE</version>
+            <version>1.0.1-RELEASE</version>
         </dependency>
     </dependencies>
 

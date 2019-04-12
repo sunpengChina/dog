@@ -62,6 +62,8 @@ public class DogDbAop {
             return  result;
         }
 
+        Set<TccLock>   newLocks = null;
+
 
         DogAopHelper aopHelper = new DogAopHelper(pjp, db, ReflectUtil.getTargetClass(pjp));
 
@@ -142,7 +144,7 @@ public class DogDbAop {
 
             if (lockedData.size() != 0) {
 
-                Set<TccLock>   newLocks = iLockPool.lock(ThreadManager.currentTcc(),ThreadManager.currentCall(),lockedData.keySet());
+                newLocks = iLockPool.lock(ThreadManager.currentTcc(),ThreadManager.currentCall(),lockedData.keySet());
 
                 for (TccLock lock : newLocks) {
 
@@ -159,6 +161,18 @@ public class DogDbAop {
 
 
         } catch (Exception e) {
+
+
+            if( newLocks != null){
+
+                for (TccLock lock : newLocks) {
+
+                    buffer.clearData(lock);
+
+                }
+
+            }
+
 
             throw e;
         }
