@@ -8,13 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.NoRepositoryBean;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.repository.query.QueryByExampleExecutor;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import top.dogtcc.core.util.SpringContextUtil;
 import top.dogtcc.database.core.annotation.DogDb;
 import top.dogtcc.database.core.annotation.OperationType;
@@ -111,13 +104,7 @@ public abstract class DogJpaRepository<T, ID> implements JpaRepository<T,ID> {
     public abstract JpaRepository<T,ID> repository();
 
 
-    /**
-     * 自生成主键
-     * @param s
-     * @param
-     * @param <S>
-     * @return
-     */
+
     public <S extends T> S create(S s) {
 
         S ret  = repository().saveAndFlush(s);
@@ -138,12 +125,7 @@ public abstract class DogJpaRepository<T, ID> implements JpaRepository<T,ID> {
     }
 
 
-    /**
-     * 插入非自生成主键的数据
-     * @param s
-     * @param <S>
-     * @return
-     */
+
     @DogDb(queryMethodName = "findById",
             saveMethodName = "saveAndFlush", operationType = OperationType.INSERTNEWDATA,deleteMethodName = "deleteById")
     public <S extends T> S insert(S s) {
@@ -153,12 +135,7 @@ public abstract class DogJpaRepository<T, ID> implements JpaRepository<T,ID> {
     }
 
 
-    /**
-     * 修改数据
-     * @param s
-     * @param <S>
-     * @return
-     */
+
     @Override
     @DogDb(queryMethodName = "findById",saveMethodName = "saveAndFlush")
     public <S extends T> S save(S s) {
