@@ -12,6 +12,9 @@ import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import top.dogtcc.core.util.SpringContextUtil;
 import top.dogtcc.database.core.annotation.DogDb;
 import top.dogtcc.database.core.annotation.OperationType;
@@ -22,6 +25,7 @@ import java.util.Optional;
 
 
 public abstract class DogJpaRepository<T, ID> implements JpaRepository<T,ID> {
+
     @Override
     public List<T> findAll() {
         return repository().findAll();

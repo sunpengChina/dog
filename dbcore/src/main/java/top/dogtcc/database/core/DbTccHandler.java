@@ -85,7 +85,7 @@ public class DbTccHandler extends TccHandler {
 
             logger.error(g);
 
-            errorLog.cancelError(tcc, call, context);
+            getErrorLog().cancelError(tcc, call, context);
 
         }
 

@@ -14,13 +14,25 @@ public abstract class TccHandler implements ITccHandler{
     private static Logger logger = Logger.getLogger(TccHandler.class);
 
     @Autowired
-    ILockPool iLockPool;
+    private ILockPool iLockPool;
 
     @Autowired
-    IContextManager iContextManager;
+    private IContextManager iContextManager;
 
     @Autowired
-    protected IErrorLog errorLog;
+    private IErrorLog errorLog;
+
+    public ILockPool getiLockPool() {
+        return iLockPool;
+    }
+
+    public IContextManager getiContextManager() {
+        return iContextManager;
+    }
+
+    public IErrorLog getErrorLog() {
+        return errorLog;
+    }
 
     @Override
     public void exceptionHandler(DogTcc tcc, DogCall call, Exception e) throws Exception {

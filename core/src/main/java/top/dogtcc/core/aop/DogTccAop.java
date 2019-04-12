@@ -1,5 +1,6 @@
 package top.dogtcc.core.aop;
 
+import org.springframework.core.annotation.Order;
 import top.dogtcc.core.annotation.DogTccAnnotation;
 import top.dogtcc.core.ApplicationAutoConfig;
 import top.dogtcc.core.entry.DogTcc;
@@ -15,8 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Aspect
-@PropertySource(value = {"classpath:application.properties"})
-@ConfigurationProperties(prefix = "application")
+@Order(-2)
 public class DogTccAop {
 
     private static Logger logger = Logger.getLogger(DogTccAop.class);

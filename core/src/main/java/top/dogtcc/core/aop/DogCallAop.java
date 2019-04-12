@@ -1,5 +1,6 @@
 package top.dogtcc.core.aop;
 
+import org.springframework.core.annotation.Order;
 import top.dogtcc.core.ApplicationAutoConfig;
 import top.dogtcc.core.annotation.DogCallAnnotation;
 import top.dogtcc.core.annotation.ITccHandler;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @Component
 @Aspect
+@Order(-1)
 public class DogCallAop{
 
     private static Logger logger = Logger.getLogger(DogCallAop.class);

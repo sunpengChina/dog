@@ -55,6 +55,12 @@ public class DogDbAop {
 
         Object result = null;
 
+        if(!ThreadManager.inTcc()){
+
+            result = pjp.proceed();
+
+            return  result;
+        }
 
 
         DogAopHelper aopHelper = new DogAopHelper(pjp, db, ReflectUtil.getTargetClass(pjp));
