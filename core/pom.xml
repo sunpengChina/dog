@@ -27,12 +27,12 @@
     <parent>
          <groupId>top.dogtcc</groupId>
          <artifactId>tcc</artifactId>
-         <version>1.0.2-SNAPSHOT</version>
+         <version>1.0.2-RELEASE</version>
     </parent>
 
     <groupId>top.dogtcc</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2-RELEASE</version>
 
 
 
