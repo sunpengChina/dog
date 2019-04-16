@@ -1,6 +1,6 @@
 /target/
 !.mvn/wrapper/maven-wrapper.jar
-/demo
+OrderServer/*
 ### STS ###
 .apt_generated
 .classpath
