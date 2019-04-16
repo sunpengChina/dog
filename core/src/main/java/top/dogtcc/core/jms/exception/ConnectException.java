@@ -6,6 +6,10 @@ public class ConnectException extends Exception {
         super();
     }
 
+    public ConnectException(Throwable cause) {
+        super(cause);
+    }
+
     public ConnectException(String message) {
         super(message);
     }

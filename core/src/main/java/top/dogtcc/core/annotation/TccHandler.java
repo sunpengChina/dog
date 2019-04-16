@@ -8,48 +8,22 @@ import top.dogtcc.core.entry.TccContext;
 import top.dogtcc.core.entry.TccLock;
 import top.dogtcc.core.jms.IContextManager;
 import top.dogtcc.core.jms.ILockPool;
-import top.dogtcc.core.log.IErrorLog;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class TccHandler implements ITccHandler{
 
+
     private static Logger logger = Logger.getLogger(TccHandler.class);
 
-    @Autowired
-    private ILockPool lockPool;
+    @Override
+    public void before(  DogTcc tcc, DogCall call ) {
 
-    @Autowired
-    private IContextManager iContextManager;
-
-    public  Set<TccLock> getlocks (Set<TccLock> locks) throws Exception{
-
-        return  ThreadManager.getContext().getLockList();
 
     }
-
-    public  Map<Object,Object> getDatas() throws Exception{
-
-        return ThreadManager.getContext().getContext();
-
-    }
-
-    public void putDatas(Map<Object,Object> datas)throws Exception{
-
-        ThreadManager.getContext().getContext().putAll(datas);
-
-        iContextManager.setContext(ThreadManager.currentTcc(),ThreadManager.currentCall(),ThreadManager.getContext());
-    }
-
-
-    public Set<TccLock> lock (Set<TccLock> locks) throws Exception{
-
-        return  lockPool.lock(ThreadManager.currentTcc(),ThreadManager.currentCall(),locks);
-    }
-
-
 
 
     @Override
@@ -58,20 +32,53 @@ public abstract class TccHandler implements ITccHandler{
 
     }
 
+    @Autowired
+    private ILockPool lockPool;
+
+    @Autowired
+    private IContextManager iContextManager;
+
+
+    final  public   void putDatas(Map<Object,Object> datas)throws Exception{
+
+        if(ThreadManager.inTcc()){
+
+            ThreadManager.getContext().getContext().putAll(datas);
+
+            iContextManager.setContext(ThreadManager.currentTcc(),ThreadManager.currentCall(),ThreadManager.getContext());
+
+        }
+
+    }
+
+
+    final public   Set<TccLock> lock (Set<TccLock> locks) throws Exception{
+
+        if(ThreadManager.inTcc()) {
+
+            return lockPool.lock(ThreadManager.currentTcc(), ThreadManager.currentCall(), locks);
+
+        }
+
+        return  null;
+    }
+
+
+
     @Override
-    public void cancel(TccContext context, DogTcc tcc, DogCall call) {
-        logger.info("cancel"+ tcc.toString());
+    public    void cancel(TccContext context, DogTcc tcc, DogCall call) {
+
+
+        logger.info("cancel call: "+call);
+
     }
 
     @Override
-    public void confirm(TccContext context, DogTcc tcc, DogCall call) {
-        logger.info("confirm"+ tcc.toString());
+    public    void confirm(TccContext context, DogTcc tcc, DogCall call) {
+
+        logger.info("confirm call: "+call);
+
     }
 
-    @Override
-    public void before(  DogTcc tcc, DogCall call ) {
-
-        logger.info("before");
-    }
 
 }

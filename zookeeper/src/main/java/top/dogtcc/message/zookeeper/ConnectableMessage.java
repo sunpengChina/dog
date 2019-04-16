@@ -4,18 +4,19 @@ package top.dogtcc.message.zookeeper;
 import top.dogtcc.core.common.Connectable;
 import top.dogtcc.core.entry.DogTcc;
 import top.dogtcc.core.jms.exception.ConnectException;
-import top.dogtcc.core.jms.exception.NonexistException;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.*;
 import top.dogtcc.message.zookeeper.connection.ConnectionPool;
+import top.dogtcc.message.zookeeper.exception.NoApplicationWorkPathException;
+import top.dogtcc.message.zookeeper.exception.NoNodeException;
+import top.dogtcc.message.zookeeper.exception.NoZookeeperWorkPathException;
+import top.dogtcc.message.zookeeper.exception.NotStartTccNodeException;
 import top.dogtcc.message.zookeeper.util.PathHelper;
 import top.dogtcc.message.zookeeper.util.ZkHelp;
 
 import java.io.Closeable;
 import java.io.IOException;
-
-import static top.dogtcc.message.zookeeper.util.ZkHelp.throwException;
 
 
 public class ConnectableMessage implements Connectable, Closeable {
@@ -50,11 +51,11 @@ public class ConnectableMessage implements Connectable, Closeable {
     }
 
 
-    protected void checkIfTransactionStarter(DogTcc transaction) throws  ConnectException{
+    protected void checkIfTransactionStarter(DogTcc transaction) throws NotStartTccNodeException {
 
         if(!transaction.getApplication().equals(applicationName)){
 
-            throw  new ConnectException("");
+            throw  new NotStartTccNodeException();
         }
 
     }
@@ -62,44 +63,24 @@ public class ConnectableMessage implements Connectable, Closeable {
 
     public void close() throws IOException{
 
-        try {
-
-            connectionPool.close();
-
-        }catch (Exception e){
-
-
-            logger.error(e);
-
-            throw new IOException();
-        }
+        connectionPool.close();
 
     }
 
     @Override
     public void connect() throws ConnectException, InterruptedException {
 
-        try{
 
-            connectionPool.connect();
+        connectionPool.connect();
 
-        }catch (Exception e){
-
-            logger.error(e);
-
-            throw new ConnectException();
-
-        }
 
         try{
 
             ZkHelp.checkContent(getConnection(),pathHelper.zookeeperWorkPath(),false,null);
 
-        }catch (ConnectException|NonexistException|InterruptedException e){
+        }catch (NoNodeException e){
 
-            logger.error(e);
-
-            throwException(e);
+            throw new NoZookeeperWorkPathException();
 
         }
 
@@ -107,11 +88,9 @@ public class ConnectableMessage implements Connectable, Closeable {
 
             ZkHelp.checkContent(getConnection(),pathHelper.applicationPath(),true,null);
 
-        }catch (ConnectException|NonexistException|InterruptedException e){
+        }catch(NoNodeException e){
 
-            logger.error(e);
-
-            throwException(e);
+            throw new NoApplicationWorkPathException();
 
         }
 

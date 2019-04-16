@@ -3,8 +3,7 @@ package top.dogtcc.message.zookeeper;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.data.Stat;
 import top.dogtcc.core.entry.*;
-import top.dogtcc.core.jms.exception.ConnectException;
-import top.dogtcc.core.jms.exception.NonexistException;
+import top.dogtcc.core.jms.exception.*;
 
 import top.dogtcc.core.jms.IBroker;
 import org.apache.log4j.Logger;
@@ -21,7 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static top.dogtcc.message.zookeeper.util.ZkHelp.throwException;
+import static top.dogtcc.message.zookeeper.util.ZkHelp.exist;
+
 
 
 public abstract class SimultaneousMessage extends ConnectableMessage implements IBroker {
@@ -41,16 +41,14 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
     /**
      * 注册TCC事务
+     *
      * @param tcc
-     * @throws ConnectException
-     * @throws NonexistException
      * @throws InterruptedException
      */
     @Override
-    public synchronized void  registerTcc(DogTcc tcc) throws ConnectException,NonexistException,InterruptedException{
+    public synchronized void registerTcc(DogTcc tcc) throws TccExsitException, ConnectException, InterruptedException {
 
-
-        ZkHelp.checkContent(getConnection(),pathHelper.tccNamePath(tcc),true,null);
+        ZkHelp.checkContent(getConnection(), pathHelper.tccNamePath(tcc), true, null);
 
         List<Op> ops = new ArrayList<Op>();
 
@@ -65,82 +63,99 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
             getConnection().multi(ops);
 
-            logger.info(tcc +"Start OK");
+        } catch (KeeperException.NodeExistsException e) {
 
-        }catch (Exception e){
+            throw new TccExsitException();
 
-            logger.error(tcc +"Start error" + e);
+        } catch (KeeperException f) {
+
+            throw new ConnectException();
         }
 
+        logger.debug("registerTcc:"+tcc);
 
     }
 
     @Override
-    public synchronized void confirmTry(DogTcc tcc) throws  ConnectException ,InterruptedException{
-
-        checkIfTransactionStarter(tcc);
-
-        try{
-
-            getConnection().setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CONFIRM.getBytes(),AnyVersion);
-
-            logger.info(tcc + ": confirm");
-
-        }catch (KeeperException|InterruptedException e){
-
-            logger.error(e);
-
-            throwException(e);
-        }
-
-    }
-
-    @Override
-    public synchronized void cancelTry(DogTcc tcc) throws  ConnectException ,InterruptedException{
+    public synchronized void confirmTry(DogTcc tcc) throws TccNotExsitException, ConnectException, InterruptedException {
 
         checkIfTransactionStarter(tcc);
 
         try {
 
-            getConnection().setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CANCEL.getBytes(),AnyVersion);
+            getConnection().setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CONFIRM.getBytes(), AnyVersion);
 
-            logger.info(tcc + ": cancel");
+        } catch (KeeperException e) {
 
-        }catch (KeeperException|InterruptedException e){
+            if(e instanceof  KeeperException.NoNodeException){
 
-            logger.error(e);
+                throw  new TccNotExsitException();
+            }
 
-            throwException(e);
+           throw  new ConnectException();
+
         }
-
+        logger.debug("confirmTry:"+tcc);
 
     }
 
     @Override
-    public synchronized void setContext(DogTcc tcc, DogCall call, TccContext context) throws ConnectException, NonexistException, InterruptedException {
+    public synchronized void cancelTry(DogTcc tcc) throws TccNotExsitException, ConnectException, InterruptedException {
 
-        ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(tcc,applicationName),false,null);
+        checkIfTransactionStarter(tcc);
+
+        try {
+
+            getConnection().setData(pathHelper.tccKeyPath(tcc), DogTccStatus.CANCEL.getBytes(), AnyVersion);
+
+        } catch (KeeperException e) {
+
+            if(e instanceof  KeeperException.NoNodeException){
+
+                throw  new TccNotExsitException();
+            }
+
+            throw  new ConnectException();
+        }
+
+        logger.debug("cancelTry:"+tcc);
+
+    }
+
+    @Override
+    public synchronized void setContext(DogTcc tcc, DogCall call, TccContext context) throws TccNotExsitException, CallNotExsitException, ConnectException, InterruptedException {
+
+        ZkHelp.checkContent(getConnection(), pathHelper.subApplicationPath(tcc, applicationName), false, null);
 
         List<Op> ops = new ArrayList<Op>();
 
-        ops.add(Op.setData(pathHelper.callPath(tcc,applicationName,call),convert.objectToByteArray(context),AnyVersion));
+        ops.add(Op.setData(pathHelper.callPath(tcc, applicationName, call), convert.objectToByteArray(context), AnyVersion));
 
         try {
 
             getConnection().multi(ops);
 
-            logger.info(tcc +" " +"设置数据:" + call +" OK");
+        } catch (KeeperException e) {
 
-        }catch (Exception e){
+            if(!exist(getConnection(),pathHelper.tccKeyPath(tcc))){
 
-            logger.error(e);
+                throw  new TccNotExsitException();
+            }
+
+            if(!exist(getConnection(),pathHelper.callPath(tcc, applicationName, call))){
+
+                throw  new CallNotExsitException();
+            }
+
+           throw  new ConnectException();
 
         }
 
+        logger.debug("setContext:"+tcc +" call:"+call);
     }
 
     @Override
-    public synchronized Set<TccLock> lock(DogTcc transaction, DogCall call, Set<TccLock> locks)throws ConnectException,InterruptedException ,NonexistException {
+    public synchronized Set<TccLock> lock(DogTcc tcc, DogCall call, Set<TccLock> locks) throws LockExsitException,ConnectException, InterruptedException, TccNotExsitException, CallNotExsitException {
 
         Set<TccLock> newlocks = new HashSet<>();
 
@@ -148,9 +163,9 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
         List<Op> ops = new ArrayList<Op>();
 
-        for (TccLock lock : locks){
+        for (TccLock lock : locks) {
 
-            if(oldContext.getLockList().contains(lock)){
+            if (oldContext.getLockList().contains(lock)) {
 
                 continue;
 
@@ -160,186 +175,226 @@ public abstract class SimultaneousMessage extends ConnectableMessage implements 
 
             try {
 
-                bytelock  =  getConnection().getData(pathHelper.lockerPath(lock.getKey()),false,new Stat());
+                bytelock = getConnection().getData(pathHelper.lockerPath(lock.getKey()), false, new Stat());
 
-            }catch (Exception e){
+            } catch (KeeperException e) {
+
+                if(! (e instanceof KeeperException.NoNodeException)){
+
+                    throw  new ConnectException();
+
+                }
 
             }
 
-            if(bytelock == null){
+            if (bytelock == null) {
 
                 oldContext.getLockList().add(lock);
 
                 newlocks.add(lock);
 
-                ops.add(Op.create(pathHelper.lockerPath(lock.getKey()),transaction.getUnique().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+                ops.add(Op.create(pathHelper.lockerPath(lock.getKey()), tcc.getUnique().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
-                logger.info(pathHelper.lockerPath(lock.getKey()));
+                logger.debug("lock:"+tcc +" lock:"+lock.getKey());
 
-                logger.info("Lock:"+lock.getKey());
+            } else {
 
-            }else {
+                if (new String(bytelock).equals(tcc.getUnique())) {
 
-                if(new String(bytelock).equals(transaction.getUnique())){
+                    logger.debug("relock:"+tcc +" lock:"+lock.getKey());
 
-                    logger.info("ReentrantLock:" + lock.getKey());
+                } else {
 
-                }else{
-
-                    throw  new ConnectException("Can't get the lock");
+                    throw new LockExsitException(lock.getKey());
 
                 }
             }
 
+
         }
 
-        ops.add(Op.setData(pathHelper.callPath(transaction,applicationName,call),convert.objectToByteArray(oldContext),AnyVersion));
-
-        logger.info(pathHelper.callPath(transaction,applicationName,call));
+        ops.add(Op.setData(pathHelper.callPath(tcc, applicationName, call), convert.objectToByteArray(oldContext), AnyVersion));
 
         try {
 
             getConnection().multi(ops);
 
-        }catch (Exception e){
+        } catch (KeeperException e) {
 
-            throwException(e);
+            if(!exist(getConnection(),pathHelper.tccKeyPath(tcc))){
+
+                throw  new TccNotExsitException();
+            }
+
+            if(!exist(getConnection(),pathHelper.callPath(tcc, applicationName, call))){
+
+                throw  new CallNotExsitException();
+            }
+
+            if(e instanceof  KeeperException.NodeExistsException){
+
+                throw  new LockExsitException();
+            }
+
+            throw  new ConnectException();
 
         }
 
-        return  newlocks;
+        return newlocks;
     }
 
     @Override
-    public synchronized void registerCall(DogTcc transaction, DogCall call, TccContext context) throws ConnectException,InterruptedException ,NonexistException {
+    public synchronized void registerCall(DogTcc transaction, DogCall call, TccContext context) throws LockExsitException,TccNotExsitException, CallExsitException, ConnectException, InterruptedException {
 
-        ZkHelp.checkContent(getConnection(),pathHelper.subApplicationPath(transaction,applicationName),true,null);
-
-        logger.info(pathHelper.subApplicationPath(transaction,applicationName));
+        ZkHelp.checkContent(getConnection(), pathHelper.subApplicationPath(transaction, applicationName), true, null);
 
         List<Op> ops = new ArrayList<Op>();
 
         Set<TccLock> newLocks = new HashSet<>();
 
-        for(TccLock lock : context.getLockList()){
+        for (TccLock lock : context.getLockList()) {
 
             byte[] tcc = null;
 
             try {
 
-                tcc =  getConnection().getData(pathHelper.lockerPath(lock.getKey()),false,new Stat());
+                tcc = getConnection().getData(pathHelper.lockerPath(lock.getKey()), false, new Stat());
 
-            }catch (Exception e){
+            } catch (KeeperException e) {
+
+                throw  new ConnectException();
 
             }
 
-            if(tcc != null){
+            if (tcc != null) {
 
-                if(new String(tcc).equals(transaction.getUnique())){
+                if (new String(tcc).equals(transaction.getUnique())) {
 
-                    logger.info("ReentrantLock:" + lock.getKey());
 
-                }else{
 
-                    throw  new ConnectException("锁已被占用");
+                } else {
+
+                    throw new LockExsitException(lock.getKey());
 
                 }
 
-            }else{
+            } else {
 
-                ops.add(Op.create(pathHelper.lockerPath(lock.getKey()),transaction.getUnique().getBytes(),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+                ops.add(Op.create(pathHelper.lockerPath(lock.getKey()), transaction.getUnique().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
                 newLocks.add(lock);
 
-                logger.info("Lock:" + lock.getKey());
             }
 
         }
 
         context.setLockList(newLocks);
 
-        ops.add(Op.create(pathHelper.callPath(transaction,applicationName,call),convert.objectToByteArray(context),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        ops.add(Op.create(pathHelper.callPath(transaction, applicationName, call), convert.objectToByteArray(context), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
-        logger.info(pathHelper.callPath(transaction,applicationName,call));
-
-        ops.add(Op.create(pathHelper.callMonitorPath(transaction,applicationName,call),null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
-
-        logger.info(pathHelper.callMonitorPath(transaction,applicationName,call));
+        ops.add(Op.create(pathHelper.callMonitorPath(transaction, applicationName, call), null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
 
         try {
 
             getConnection().multi(ops);
 
-            logger.info(transaction +" " +"Start Call:" + call +" OK");
 
-        }catch (Exception e){
+        } catch (KeeperException e) {
 
-            logger.error(transaction +" " +"Start Call:" + call +" error" +  e);
+            if(!exist(getConnection(),pathHelper.tccKeyPath(transaction))){
+
+                throw  new TccNotExsitException();
+            }
+
+            if(exist(getConnection(),pathHelper.callPath(transaction, applicationName, call))){
+
+                throw  new CallExsitException();
+            }
+
+            if(e instanceof  KeeperException.NodeExistsException){
+
+                throw  new LockExsitException();
+            }
 
             throw  new ConnectException();
         }
 
 
-
+        logger.debug("registerCall:"+transaction +" call:"+call);
 
     }
 
     @Override
-    public synchronized void confirmCall(DogTcc transaction, DogCall call,TccContext context) throws ConnectException, InterruptedException {
+    public synchronized void confirmCall(DogTcc transaction, DogCall call, TccContext context) throws LockNotExsitException, TccNotExsitException, CallNotExsitException, ConnectException, InterruptedException {
 
 
         try {
 
             List<Op> ops = new ArrayList<Op>();
 
-            ops.add(Op.delete(pathHelper.callMonitorPath(transaction,applicationName,call),AnyVersion));
+            ops.add(Op.delete(pathHelper.callMonitorPath(transaction, applicationName, call), AnyVersion));
 
-            ops.add(Op.delete(pathHelper.callPath(transaction,applicationName,call),AnyVersion));
+            ops.add(Op.delete(pathHelper.callPath(transaction, applicationName, call), AnyVersion));
 
-            for(TccLock lock : context.getLockList()){
+            for (TccLock lock : context.getLockList()) {
 
-                logger.info("unLock:" + lock.getKey());
-
-                ops.add(Op.delete(pathHelper.lockerPath(lock.getKey()),AnyVersion));
+                ops.add(Op.delete(pathHelper.lockerPath(lock.getKey()), AnyVersion));
 
             }
 
             getConnection().multi(ops);
 
-            logger.info( transaction + "  " +call +" confirm");
+        } catch (KeeperException e) {
 
+            if(!exist(getConnection(),pathHelper.tccKeyPath(transaction))){
 
-        }catch (Exception e){
+                throw  new TccNotExsitException();
+            }
 
-            logger.error("删除时，被其他节点托管！，将由其他节点删除！");
+            if(!exist(getConnection(),pathHelper.callPath(transaction, applicationName, call))){
 
-            throwException(e);
+                throw  new CallNotExsitException();
+            }
+
+            if(e instanceof  KeeperException.NoNodeException){
+
+                throw  new LockNotExsitException();
+            }
+
+            throw  new ConnectException();
+
         }
 
+
+        logger.debug("confirmCall:"+transaction +" call:"+call);
 
     }
 
     @Override
-    public synchronized void clearTcc(DogTcc transaction) throws ConnectException, InterruptedException{
+    public synchronized void clearTcc(DogTcc transaction) throws TccNotExsitException, ConnectException, InterruptedException {
 
         try {
 
             List<Op> ops = new ArrayList<Op>();
 
-            ops.add(Op.delete(pathHelper.tccMonitorContent(transaction),AnyVersion));
+            ops.add(Op.delete(pathHelper.tccMonitorContent(transaction), AnyVersion));
 
-            ops.add(Op.delete(pathHelper.tccKeyPath(transaction),AnyVersion));
+            ops.add(Op.delete(pathHelper.tccKeyPath(transaction), AnyVersion));
 
             getConnection().multi(ops);
 
-            logger.info(transaction + " clear");
 
-        }catch (KeeperException|InterruptedException  e){
+        } catch (KeeperException e) {
 
-            logger.error(e);
+            if( e instanceof KeeperException.NoNodeException){
 
-            throwException(e);
+                throw  new TccNotExsitException();
+            }
+
+            throw  new ConnectException();
         }
+
+        logger.debug("clearTcc:"+transaction);
 
     }
 

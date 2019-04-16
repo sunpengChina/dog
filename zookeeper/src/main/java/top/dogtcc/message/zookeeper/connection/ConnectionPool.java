@@ -3,7 +3,7 @@ package top.dogtcc.message.zookeeper.connection;
 import org.apache.zookeeper.ZooKeeper;
 import top.dogtcc.core.common.Connectable;
 import top.dogtcc.core.jms.exception.ConnectException;
-import top.dogtcc.core.jms.exception.NonexistException;
+import top.dogtcc.core.jms.exception.TccNotExsitException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -47,7 +47,7 @@ public class ConnectionPool implements Connectable, Closeable {
     }
 
     @Override
-    public synchronized void connect() throws ConnectException, NonexistException, InterruptedException {
+    public synchronized void connect() throws ConnectException, InterruptedException {
 
         for(Connection connection :connections){
 

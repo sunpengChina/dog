@@ -6,8 +6,13 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import top.dogtcc.core.entry.DogCall;
+import top.dogtcc.core.entry.DogTcc;
+import top.dogtcc.core.jms.exception.CallNotExsitException;
 import top.dogtcc.core.jms.exception.ConnectException;
-import top.dogtcc.core.jms.exception.NonexistException;
+import top.dogtcc.core.jms.exception.TccNotExsitException;
+import top.dogtcc.message.zookeeper.exception.NoNodeException;
+
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -20,26 +25,25 @@ public class ZkHelp {
     private static Set<String> haveCheckedPath = new ConcurrentSkipListSet<>();
 
 
-    public static   void throwException(Exception e)throws ConnectException,InterruptedException {
 
-        if (e instanceof KeeperException) {
+    public static boolean exist(ZooKeeper zooKeeper, String content) throws ConnectException, InterruptedException {
 
-            throw new ConnectException();
+        try {
 
-        }
+            return zooKeeper.exists(content, false) != null;
 
-        if (e instanceof InterruptedException) {
+        }catch (KeeperException e){
 
-            throw (InterruptedException) e;
+            throw   new ConnectException();
+
         }
 
     }
 
 
+    public static void checkContent(ZooKeeper zooKeeper, String content, boolean create, byte[] data) throws ConnectException, InterruptedException {
 
-    public static void checkContent(ZooKeeper zooKeeper,String content,boolean create,byte[] data) throws ConnectException, NonexistException,InterruptedException{
-
-        if(haveCheckedPath.size()>100000){
+        if (haveCheckedPath.size() > 100000) {
 
             haveCheckedPath.clear();
 
@@ -48,7 +52,7 @@ public class ZkHelp {
         /**
          * 有该目录了，无需检测
          */
-        if(haveCheckedPath.contains(content)){
+        if (haveCheckedPath.contains(content)) {
 
             return;
         }
@@ -59,11 +63,9 @@ public class ZkHelp {
 
             stat = zooKeeper.exists(content, false);
 
-        }catch (Exception e){
+        } catch (KeeperException e) {
 
-            logger.error(e);
-
-            throwException(e);
+            throw new ConnectException(e);
 
         }
 
@@ -71,34 +73,38 @@ public class ZkHelp {
 
             haveCheckedPath.add(content);
 
-        }else if(create){
+        } else if (create) {
 
             try {
 
-                if(data == null){
+                if (data == null) {
 
-                    zooKeeper.create(content,"NONE".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    zooKeeper.create(content, "NONE".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-                }else {
+                } else {
 
-                    zooKeeper.create(content,data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    zooKeeper.create(content, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 }
 
                 haveCheckedPath.add(content);
 
-            }catch (Exception e){
+            } catch (KeeperException e) {
 
+                if(e instanceof  KeeperException.NoNodeException){
 
-                logger.error(e);
+                    throw  new NoNodeException();
 
-                throwException(e);
+                }else {
+
+                    throw  new ConnectException();
+                }
+
             }
 
-            logger.info("创建：" + content);
 
-        }else{
+        } else {
 
-            throw  new NonexistException();
+            throw new NoNodeException();
         }
 
     }

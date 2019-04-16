@@ -1,5 +1,6 @@
 package top.dogtcc.core;
 
+import org.springframework.beans.factory.annotation.Value;
 import top.dogtcc.core.log.AbstractErrorLog;
 import top.dogtcc.core.log.AbstractHistoryLog;
 import top.dogtcc.core.log.IErrorLog;
@@ -24,6 +25,7 @@ public class ApplicationAutoConfig {
         this.applicationname = applicationname;
     }
 
+    @Value("${applicationname:noname}")
     private String applicationname;
 
     @Bean

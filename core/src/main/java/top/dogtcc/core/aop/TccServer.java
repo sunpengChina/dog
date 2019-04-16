@@ -4,11 +4,13 @@ import top.dogtcc.core.ApplicationAutoConfig;
 import top.dogtcc.core.entry.TccContext;
 import top.dogtcc.core.entry.DogCall;
 import top.dogtcc.core.entry.DogTcc;
+import top.dogtcc.core.jms.exception.CallExsitException;
+import top.dogtcc.core.jms.exception.LockExsitException;
+import top.dogtcc.core.jms.exception.TccNotExsitException;
 import top.dogtcc.core.jmx.TccServerMXBean;
 import top.dogtcc.core.listener.ITccListener;
 import top.dogtcc.core.log.IErrorLog;
 import top.dogtcc.core.jms.exception.ConnectException;
-import top.dogtcc.core.jms.exception.NonexistException;
 import top.dogtcc.core.jms.IBroker;
 import top.dogtcc.core.log.IHistoryLog;
 import top.dogtcc.core.common.ContextBuffer;
@@ -92,7 +94,7 @@ class TccServer implements TccServerMXBean,ITccServer {
 
             tccErrorNum ++ ;
 
-            logger.info("TCC报错:" + tran);
+            logger.error("TCC报错:" + tran);
 
             logger.error(e);
 
@@ -109,7 +111,7 @@ class TccServer implements TccServerMXBean,ITccServer {
     }
 
     @Override
-    public void tccCall(DogTcc transaction, DogCall call, TccContext context) throws ConnectException, NonexistException, InterruptedException {
+    public void tccCall(DogTcc transaction, DogCall call, TccContext context) throws LockExsitException,TccNotExsitException, CallExsitException,ConnectException, InterruptedException {
 
         callNum ++ ;
 
@@ -119,12 +121,12 @@ class TccServer implements TccServerMXBean,ITccServer {
 
         message.addTryAchievementListener(transaction, listener);
 
-        logger.info("watch:" + transaction);
+        logger.info("tccCall:" + transaction);
 
     }
 
     @Override
-    public void connect() throws ConnectException, NonexistException, InterruptedException {
+    public void connect() throws ConnectException, InterruptedException {
 
         this.message.connect();
 
@@ -132,7 +134,7 @@ class TccServer implements TccServerMXBean,ITccServer {
 
         message.addTccOfflineListner(listener);
 
-        logger.info(autoConfig.getApplicationname() + ": started");
+        logger.info("application:"+autoConfig.getApplicationname() + ": started");
     }
 
     @Override

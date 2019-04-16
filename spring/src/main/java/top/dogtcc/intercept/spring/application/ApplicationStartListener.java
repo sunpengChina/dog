@@ -1,11 +1,11 @@
 package top.dogtcc.intercept.spring.application;
 
 import top.dogtcc.core.jms.exception.ConnectException;
-import top.dogtcc.core.jms.exception.NonexistException;
 import top.dogtcc.core.common.IServer;
 import org.apache.log4j.Logger;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import top.dogtcc.core.jms.exception.TccNotExsitException;
 
 public class ApplicationStartListener implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -32,7 +32,7 @@ public class ApplicationStartListener implements ApplicationListener<ContextRefr
 
                 center.connect();
 
-            }catch (ConnectException| NonexistException |InterruptedException e){
+            }catch (ConnectException |InterruptedException e){
 
                 logger.error(e);
             }

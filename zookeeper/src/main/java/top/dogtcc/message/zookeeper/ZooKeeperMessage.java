@@ -15,11 +15,13 @@ import top.dogtcc.core.jms.exception.ConnectException;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
+import top.dogtcc.core.jms.exception.TccNotExsitException;
 import top.dogtcc.core.listener.CallNodeOfflineListener;
 import top.dogtcc.core.listener.TccAchievementListener;
 import top.dogtcc.core.listener.TccNodeOfflineListener;
 import top.dogtcc.core.listener.TccTryAchievementListener;
 import top.dogtcc.core.common.Pair;
+import top.dogtcc.message.zookeeper.exception.NoNodeException;
 import top.dogtcc.message.zookeeper.util.PathHelper;
 import top.dogtcc.message.zookeeper.watcher.TccTryWatcher;
 import org.springframework.stereotype.Component;
@@ -30,8 +32,6 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static top.dogtcc.message.zookeeper.util.ZkHelp.throwException;
 
 @Component
 public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, ITccNode {
@@ -47,7 +47,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
     }
 
     @Override
-    public void addTryAchievementListener(DogTcc transaction, TccTryAchievementListener listener) throws ConnectException, InterruptedException {
+    public void addTryAchievementListener(DogTcc transaction, TccTryAchievementListener listener) throws TccNotExsitException,ConnectException, InterruptedException {
 
 
         try {
@@ -66,17 +66,20 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
             }
 
-        } catch (Exception e) {
+        } catch (KeeperException e) {
 
-            logger.error(e);
+            if( e instanceof KeeperException.NoNodeException){
 
-            throwException(e);
+                throw  new TccNotExsitException();
 
+            }
+
+            throw  new ConnectException();
         }
     }
 
     @Override
-    public void addCallOfflineListener(CallNodeOfflineListener callNodeOfflineListener) throws ConnectException, InterruptedException {
+    public void addCallOfflineListener(CallNodeOfflineListener callNodeOfflineListener) {
 
 
             scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
@@ -120,7 +123,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                         }
 
-                    } catch (Exception e) {
+                    } catch (ConnectException|KeeperException|InterruptedException e) {
 
                         logger.error(e);
 
@@ -128,17 +131,15 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                     }
 
-                    logger.info("恢复线程结束");
+                    logger.info("CallNodeOfflineListener 恢复线程结束");
 
                 }
             }, zoolkeepconfig.getInitialdeplay(), zoolkeepconfig.getRecoveryperiod(), TimeUnit.SECONDS);
 
-
-
     }
 
     @Override
-    public void addTccOfflineListner(TccNodeOfflineListener tccNodeOfflineListener) throws ConnectException, InterruptedException {
+    public void addTccOfflineListner(TccNodeOfflineListener tccNodeOfflineListener) {
 
             scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
@@ -149,7 +150,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                         watchTccOffline(tccNodeOfflineListener);
 
-                    } catch (Exception e) {
+                    } catch (ConnectException|InterruptedException e) {
 
                         logger.error(e);
 
@@ -157,7 +158,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                     }
 
-                    logger.info("恢复线程结束");
+                    logger.info("TccNodeOfflineListener 恢复线程结束");
 
                 }
             }, zoolkeepconfig.getInitialdeplay(), zoolkeepconfig.getRecoveryperiod(), TimeUnit.SECONDS);
@@ -175,8 +176,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                 String tccnamePath = PathHelper.linkPath(pathHelper.applicationPath(), tccname);
 
-                logger.info("tcc扫描：" + tccnamePath);
-
                 List<String> tcckeys = getConnection().getChildren(tccnamePath, false);
 
                 for (String tcckey : tcckeys) {
@@ -193,8 +192,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                         dogTcc.setStatus(DogTccStatus.getInstance(tccStatus));
 
-                        logger.info("发送tcc 节点掉线事件：" + dogTcc);
-
                         tccNodeOfflineListener.onTccEvent(new TccNodeOfflineEvent(dogTcc));
 
                     } catch (Exception e) {
@@ -207,15 +204,15 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
             }
 
-        } catch (Exception e) {
+        } catch (KeeperException e) {
 
-            throwException(e);
+            throw  new ConnectException();
         }
 
     }
 
 
-    private void watchCallOffline(String application, String tccname, String tcckey, String tcckeyPath, CallNodeOfflineListener callNodeOfflineListener) throws Exception {
+    private void watchCallOffline(String application, String tccname, String tcckey, String tcckeyPath, CallNodeOfflineListener callNodeOfflineListener) throws  ConnectException, InterruptedException  {
 
 
         String nodesPath = PathHelper.linkPath(tcckeyPath, PathHelper.NODES);
@@ -265,9 +262,16 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                     DogCall call = new DogCall(uuid,applicationName);
 
-                    byte[] data = getConnection().getData(callPath, false, new Stat());
+                    try {
 
-                    dogCalls.add(new Pair<>(call, data));
+                        byte[] data = getConnection().getData(callPath, false, new Stat());
+
+                        dogCalls.add(new Pair<>(call, data));
+
+                    }catch (KeeperException e){
+
+                        throw  new ConnectException();
+                    }
 
                 }
 
@@ -279,8 +283,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                     CallNodeOfflineEvent calloff = new CallNodeOfflineEvent(dogTcc, dogCalls);
 
-                    logger.info("发送call 节点掉线事件：" + dogTcc);
-
                     callNodeOfflineListener.onCallEvent(calloff);
                 }
 
@@ -290,14 +292,14 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
     }
 
     @Override
-    public void addTccAchievementListener(DogTcc transaction, TccAchievementListener listener) throws ConnectException, InterruptedException{
+    public void addTccAchievementListener(DogTcc transaction, TccAchievementListener listener) throws TccNotExsitException, ConnectException, InterruptedException{
 
         watchCallsConfirm(transaction, listener, false);
 
     }
 
 
-    private void watchCallsConfirm(DogTcc transaction, TccAchievementListener listener, boolean reentry) throws ConnectException, InterruptedException{
+    private void watchCallsConfirm(DogTcc transaction, TccAchievementListener listener, boolean reentry) throws TccNotExsitException, ConnectException, InterruptedException{
 
 
         String path = pathHelper.tccNodesPath(transaction);
@@ -312,8 +314,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
                 @Override
                 public void process(WatchedEvent watchedEvent) {
 
-                    logger.info(path + "发生事件" + watchedEvent);
-
                     try {
 
                         if (watchedEvent.getType().equals(Event.EventType.NodeChildrenChanged)) {
@@ -322,7 +322,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                         } else if (watchedEvent.getType().equals(Event.EventType.NodeDeleted)) {
 
-                            logger.info(path + " 目录已删除");
 
                         }
 
@@ -346,7 +345,6 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
                     logger.error(e);
                 }
 
-                logger.info(path + "回调事件：" + transaction);
 
                 listener.onTccEvent(new TccAchievementEvent(transaction));
 
@@ -400,7 +398,7 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
                     } else if (watchedEvent.getType().equals(Event.EventType.NodeDeleted)) {
 
-                        logger.info(subApplication + ":目录已删除");
+                        logger.debug(subApplication + " is clear");
                     }
 
                 }
@@ -413,9 +411,9 @@ public class ZooKeeperMessage extends SimultaneousMessage implements ICallNode, 
 
             }
 
-        } catch (KeeperException | InterruptedException e) {
+        } catch (KeeperException e) {
 
-            throwException(e);
+            throw  new ConnectException();
         }
 
     }

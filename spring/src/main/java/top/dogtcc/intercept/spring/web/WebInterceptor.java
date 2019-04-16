@@ -63,13 +63,13 @@ public class WebInterceptor implements HandlerInterceptor {
 
             ThreadManager.setTcc(transaction);
 
-            logger.info("事务性调用："+ transaction.toString());
+            logger.debug("事务性调用："+ transaction.toString());
 
        }else {
 
             setInTransaction(false);
 
-            logger.info("非事务性调用");
+            logger.debug("非事务性调用");
         }
 
 

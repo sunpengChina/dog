@@ -32,8 +32,6 @@ public class DbTccHandler extends TccHandler {
     }
 
 
-
-
     @Override
     public void cancel(TccContext context, DogTcc tcc, DogCall call) {
 
@@ -107,4 +105,6 @@ public class DbTccHandler extends TccHandler {
     public void before( DogTcc tcc, DogCall call ) {
         super.before(  tcc, call );
     }
+
+
 }

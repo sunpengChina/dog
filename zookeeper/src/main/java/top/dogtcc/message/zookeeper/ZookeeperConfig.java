@@ -1,6 +1,7 @@
 package top.dogtcc.message.zookeeper;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -10,10 +11,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "dog.zookeeper")
 public class ZookeeperConfig {
 
-
-
-
-
+    @Value("${poolsize:2}")
     private int poolsize;
 
     public int getPoolsize() {
@@ -24,6 +22,7 @@ public class ZookeeperConfig {
         this.poolsize = poolsize;
     }
 
+    @Value("${dogpath:/dog}")
     private String path;
 
     public String getPath() {
@@ -36,6 +35,7 @@ public class ZookeeperConfig {
         this.path = path;
     }
 
+    @Value("${connectString:127.0.0.1:2181}")
     private String connectString;
 
     public String getConnectString() {
@@ -54,6 +54,7 @@ public class ZookeeperConfig {
         this.sessionTimeout = sessionTimeout;
     }
 
+    @Value("${connectString:4000}")
     private int sessionTimeout;
 
 
@@ -73,8 +74,12 @@ public class ZookeeperConfig {
         this.initialdeplay = initialdeplay;
     }
 
+
+    @Value("${recoveryperiod:120}")
     private  int recoveryperiod;
 
+
+    @Value("${initialdeplay:10}")
     private int initialdeplay;
 
 }

@@ -43,6 +43,29 @@ import java.util.concurrent.TimeUnit;
 public class ZooKeeperTest {
 
 
+    @Test
+    public void zooKeeperTest1() throws Exception {
+
+        ZooKeeper zooKeeper = new ZooKeeper("127.0.0.1:2181", 1000000, new Watcher() {
+            @Override
+            public void process(WatchedEvent watchedEvent) {
+                System.out.println(watchedEvent);
+            }
+        });
+
+        try {
+
+            zooKeeper.exists("/dog/fuck/fucd",false);
+
+        }catch (Exception e){
+
+            int x = 100;
+        }
+
+
+    }
+
+
 
     @Test
     public void zooKeeperTestConnection() throws Exception {

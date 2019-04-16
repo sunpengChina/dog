@@ -6,7 +6,6 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import top.dogtcc.core.common.Connectable;
 import top.dogtcc.core.jms.exception.ConnectException;
-import top.dogtcc.core.jms.exception.NonexistException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,7 +33,7 @@ public class Connection implements Watcher, Connectable, Closeable {
     @Override
     public synchronized void process(WatchedEvent watchedEvent) {
 
-        logger.info(watchedEvent);
+        logger.debug(watchedEvent);
 
         if(watchedEvent.getState().equals( Event.KeeperState.Expired) || watchedEvent.getState().equals(Event.KeeperState.Disconnected)){
 
@@ -42,9 +41,13 @@ public class Connection implements Watcher, Connectable, Closeable {
 
                 connect();
 
-            }catch (Exception e){
+            }catch (ConnectException e){
 
-                logger.info(e);
+                logger.error(e);
+
+            }catch (InterruptedException  e){
+
+                logger.error(e);
             }
 
         }
@@ -52,7 +55,7 @@ public class Connection implements Watcher, Connectable, Closeable {
     }
 
     @Override
-    public synchronized void connect() throws ConnectException, NonexistException, InterruptedException {
+    public synchronized void connect() throws ConnectException, InterruptedException {
 
         try {
 
@@ -60,7 +63,7 @@ public class Connection implements Watcher, Connectable, Closeable {
 
             zooKeeper = new ZooKeeper(connectString,timeout,this);
 
-        }catch (Exception e){
+        }catch (IOException e){
 
             throw  new ConnectException();
         }
@@ -88,4 +91,5 @@ public class Connection implements Watcher, Connectable, Closeable {
     public ZooKeeper getZooKeeper(){
         return  zooKeeper;
     }
+
 }
